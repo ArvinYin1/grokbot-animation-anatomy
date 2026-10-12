@@ -14,10 +14,21 @@ export function init(root) {
   const hashEl = root.querySelector('.seed-hash');
 
   const bot = createMiniBot(root.querySelector('.stage'), {
-    seed: fnv1a('demo-seed'), gaze: false,
+    seed: fnv1a('demo-seed'), gaze: false, blinkWindow: DUR,
   });
 
   const W = 640, H = 90;
+
+  // 播放头：会动的竖线，位置 = bot 内部时钟在 30s 窗口里的相位。
+  // 因为 bot 的眨眼时刻表按同一窗口循环，播放头扫过标记的时刻就是它眨眼的时刻。
+  const playhead = document.createElementNS(SVGNS, 'line');
+  playhead.setAttribute('class', 'playhead');
+  playhead.setAttribute('y1', 10); playhead.setAttribute('y2', H - 22);
+  timeline.appendChild(playhead);
+  bot.onFrame(({ t }) => {
+    playhead.setAttribute('x1', (t % DUR) / DUR * W);
+    playhead.setAttribute('x2', (t % DUR) / DUR * W);
+  });
 
   function drawTimeline(seed) {
     marksG.textContent = '';
@@ -35,11 +46,14 @@ export function init(root) {
       label.textContent = s + 's';
       marksG.appendChild(label);
     }
-    // 眨眼标记（双眨 = 间距 0.35s 的一对）
+    // 眨眼标记（双眨 = 间距 <0.6s 的一对，橙色）。组数按每对的第一次计，
+    // 此前只统计 i>0 且前距足够的事件——首对双眨画了橙色却计成 0 组
     let doubles = 0;
     for (let i = 0; i < events.length; i++) {
-      const isDouble = i + 1 < events.length && events[i + 1] - events[i] < 0.6;
-      if (isDouble && i > 0 && events[i] - events[i - 1] >= 0.6) doubles++;
+      const firstOfPair = i + 1 < events.length && events[i + 1] - events[i] < 0.6;
+      const secondOfPair = i > 0 && events[i] - events[i - 1] < 0.6;
+      const isDouble = firstOfPair || secondOfPair;
+      if (firstOfPair) doubles++;
       const m = document.createElementNS(SVGNS, 'rect');
       m.setAttribute('x', (events[i] / DUR) * W - 2);
       m.setAttribute('y', isDouble ? 18 : 30);

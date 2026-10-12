@@ -157,7 +157,9 @@ export function radialOutline(n, rfn, cx = 0, cy = 0) {
 // 眼睛轮廓：stadium（胶囊）↔ arc（开心弧线）之间按 arc∈[0,1] 混合，20 点
 function eyeOutline(hw, hh, arc) {
   const N = 20, pts = [];
-  const bend = hw * 1.05 * arc, th = Math.max(hh * (1 - arc * 0.4), hw * 0.55);
+  // arc=1 时是一条细细的 ⌒：厚度收细，弯度适中；arc=0 时参数无关紧要（权重为 0）
+  const bend = hw * 0.9 * arc;
+  const th = hh * (1 - arc) + Math.min(hw * 0.45, 2.4) * arc;
   for (let i = 0; i < N; i++) {
     const s = i / N, phi = s * Math.PI * 2;
     // 胶囊点（起点在右尖端，逆时针）
@@ -253,10 +255,14 @@ export function createMiniBot(container, opts = {}) {
   let blinkStart = -1;
   let schedule = [], schedIdx = 0;
   let orbitT = 0;
+  // blinkWindow > 0 时，时刻表按该窗口循环（第 5 节的时间轴演示用）
+  const blinkWin = opts.blinkWindow > 0 ? opts.blinkWindow : 0;
+  let prevBt = 0;
   const resetSchedule = (tNow) => {
-    schedule = generateBlinkSchedule(seed, 3600);
+    schedule = generateBlinkSchedule(seed, blinkWin || 3600);
+    const tt = blinkWin ? tNow % blinkWin : tNow;
     schedIdx = 0;
-    while (schedIdx < schedule.length && schedule[schedIdx] <= tNow) schedIdx++;
+    while (schedIdx < schedule.length && schedule[schedIdx] <= tt) schedIdx++;
   };
   resetSchedule(0);
 
@@ -291,11 +297,15 @@ export function createMiniBot(container, opts = {}) {
     const pitch = gy * 18 + driftP;
     lastYaw = yaw; lastPitch = pitch;
 
-    // 眨眼时刻表推进
+    // 眨眼时刻表推进（blinkWindow 模式下按窗口循环）
+    const bt = blinkWin ? t % blinkWin : t;
+    if (bt < prevBt) schedIdx = 0; // 窗口回绕
+    prevBt = bt;
     let blink = 0;
-    if (schedIdx < schedule.length && t >= schedule[schedIdx]) { blinkStart = t; schedIdx++; }
+    if (schedIdx < schedule.length && bt >= schedule[schedIdx]) { blinkStart = bt; schedIdx++; }
     if (blinkStart >= 0) {
-      const p = (t - blinkStart) / 0.26;   // 时长 0.26s，45% 处完全闭合
+      const since = bt >= blinkStart ? bt - blinkStart : bt + blinkWin - blinkStart;
+      const p = since / 0.26;   // 时长 0.26s，45% 处完全闭合
       if (p >= 1) { blinkStart = -1; }
       else blink = p < 0.45 ? easeInOutQuad(p / 0.45) : 1 - easeInOutQuad((p - 0.45) / 0.55);
     }

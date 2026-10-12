@@ -110,6 +110,8 @@ main { max-width: 1100px; margin: 0 auto; padding: 0 28px; }
 .section h2 { font-size: 30px; font-weight: 800; margin-bottom: 18px; letter-spacing: 0.01em; }
 .section p { color: var(--text-dim); margin-bottom: 14px; }
 .section p strong, .section li strong { color: var(--text); font-weight: 600; }
+/* 浅色纸面卡片里的 strong 不能用亮字色，否则白上写白（决策向导踩过这个坑） */
+.section .paper p strong, .section .paper li strong { color: var(--ink); }
 code {
   font-family: var(--mono); font-size: 0.86em;
   background: #1b1b24; border: 1px solid #26263a;
@@ -203,6 +205,7 @@ pre.code {
 .blink-timeline .tick-label { fill: #999; font-size: 10px; font-family: var(--mono); text-anchor: middle; }
 .blink-timeline .mark { fill: var(--accent); }
 .blink-timeline .mark.double { fill: #ff8a3d; }
+.blink-timeline .playhead { stroke: var(--ink); stroke-width: 1.5; }
 .blink-count { color: #555; margin-top: 8px; }
 .seed-hash { color: #999; margin-top: 6px; font-size: 12px; }
 
