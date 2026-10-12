@@ -1,33 +1,37 @@
-# GrokBotMark 解剖 · 交互式讲解页
+# GrokBot Avatar Anatomy
 
-一个面向开发者的中文交互式长页，讲解 macOS 应用 **Grok Bot**（Electron）中 bot 头像动画引擎 **GrokBotMark** 的实现原理，以及程序化 SVG 方案相对于 Lottie / 视频 / WebGL shader / CSS 动画的优势。
+[English](README.md) | [中文](README.zh-CN.md)
 
-页面本身即是对这套哲学的实践：**0 依赖、0 构建、0 素材**，纯 HTML + CSS + 原生 ES modules，所有 demo 实时计算。
+An interactive explainer page (in Chinese) dissecting how the **Grok Bot** macOS app's avatar animation engine works — and why its procedural-SVG approach beats Lottie, video/GIF, WebGL shaders and CSS animation for a living, interactive character.
 
-## 运行
+The page practices what it preaches: **0 dependencies, 0 build step, 0 asset bytes** — plain HTML + CSS + native ES modules, every demo computed live.
+
+## Live demo / Run
+
+GitHub Pages: **https://arvinyin1.github.io/grokbot-avatar-anatomy/**
+
+Or run locally (ES modules require HTTP, don't open the file directly):
 
 ```bash
 python3 -m http.server 8000
-# 打开 http://127.0.0.1:8000/
+# open http://127.0.0.1:8000/
 ```
 
-（ES modules 需要通过 HTTP 访问，不能直接双击打开 index.html。）
+## What's inside
 
-## 内容
+- **Every frame is computed** — procedural SVG + a DOM-diff writer, with a live attribute panel
+- **Shape morph: radial outline interpolation** — 192 ray samples, per-angle lerp, sampling-density comparison
+- **Springs, not timers** — a 120 Hz semi-implicit Euler integrator playground vs ease-out
+- **Pseudo-3D: the eyes live on a sphere** — Rodrigues rotation + orthographic projection, flat-vs-sphere comparison
+- **Blinks & liveliness** — seeded-PRNG blink schedule, deterministic yet organic
+- **State machine & recipe shuffle** — 40+ states, keyframed clips shuffled with random phase
+- **Head-to-head comparison** — procedural SVG vs Lottie vs video/GIF vs WebGL vs CSS, plus a decision wizard
 
-- **每帧都是算出来的** — 程序化 SVG + DOM diff 写入器，实时属性面板
-- **形状 morph：径向轮廓插值** — 192 条射线采样，逐角度 lerp，采样密度对比
-- **弹簧，不是定时器** — 120Hz 半隐式欧拉积分器游乐场，对比 ease-out
-- **伪 3D：眼睛真的在球面上** — 罗德里格斯旋转 + 正交投影，平面贴眼穿帮对比
-- **眨眼与生命感** — 种子化 PRNG 眨眼时刻表，确定可复现
-- **状态机与 recipe 洗牌** — 40+ 状态、关键帧 clip 洗牌、随机相位
-- **横向对比** — 程序化 SVG vs Lottie vs 视频/GIF vs WebGL vs CSS + 选型向导
+## Source
 
-## 来源
+All findings come from static analysis of the unpacked `app.asar` of Grok Bot (Electron, macOS), for study and research only. This project contains **no code or assets from the original app** — every demo is an independent reimplementation. Grok and x.ai trademarks belong to their owners.
 
-文中结论来自对 Grok Bot（Electron, macOS）`app.asar` 解包后的逆向分析，仅供学习研究。本项目不包含任何原应用的代码或素材；所有 demo 为独立重写。Grok 与 x.ai 相关商标归其所有者。
-
-另见：[bloub](https://github.com/jeremy-prt/bloub) — 另一份基于视频逐帧测量的独立复刻。
+See also: [bloub](https://github.com/jeremy-prt/bloub) — another independent recreation, measured frame-by-frame from video.
 
 ## License
 
