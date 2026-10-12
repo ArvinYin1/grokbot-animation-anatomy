@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GrokBotMark 解剖 —— 一个不用任何动画库的角色动画引擎</title>
+<meta name="description" content="基于对 macOS 应用 Grok Bot（Electron）app.asar 解包的逆向分析：程序化 SVG bot 头像动画引擎的实现原理。">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<nav class="topnav">
+  <span class="brand">GrokBotMark 解剖</span>
+  <span class="nav-links">
+    <a href="#sec-svg">SVG</a>
+    <a href="#sec-morph">Morph</a>
+    <a href="#sec-spring">弹簧</a>
+    <a href="#sec-sphere">伪 3D</a>
+    <a href="#sec-blink">眨眼</a>
+    <a href="#sec-states">状态机</a>
+    <a href="#sec-compare">对比</a>
+  </span>
+</nav>
+
+<!-- ============ 0. HERO ============ -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-text">
+      <p class="kicker">基于对 Grok Bot（Electron, macOS）app.asar 解包的逆向分析</p>
+      <h1>一个不用任何<br>动画库的角色<br>动画引擎</h1>
+      <p class="lede">Grok Bot 的头像引擎 GrokBotMark：没有 Lottie json，没有 gif/webm/mp4，
+        没有 glsl/wgsl，没有一张图片——全部图形在运行时用代码算出来。
+        这个页面上你看到的每一个 demo，都是它讲的那项技术本身。</p>
+      <div class="badges">
+        <span class="badge"><b>0</b> 个动画库</span>
+        <span class="badge"><b>0</b> 字节素材</span>
+        <span class="badge"><b>60fps</b> 程序化生成</span>
+      </div>
+    </div>
+    <div class="hero-stage-wrap">
+      <div class="hero-stage paper"></div>
+      <p class="stage-caption">实时 mini-bot（本页引擎）—— 动一下鼠标，它会看你</p>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<!-- ============ 1. 程序化 SVG ============ -->
+<section class="section" id="sec-svg">
+  <div class="col-text">
+    <p class="sec-no">01</p>
+    <h2>每帧都是算出来的</h2>
+    <p>GrokBotMark 在 JS 里维护一棵<strong>虚拟 SVG 节点树</strong>，每帧重新计算所有图形参数，
+      再由一个 <strong>DOM diff 写入器</strong>把变化落到真实 DOM：结构不变时只写
+      <code>attribute</code>，结构变了才 <code>createElementNS</code> 重建。</p>
+    <p>身体是 <code>&lt;path fill&gt;</code>；眼睛不是盖在身体上的白色形状，而是用 SVG
+      <code>&lt;mask&gt;</code> 从身体上<strong>挖出来的洞</strong>——所以身体下面是
+      什么背景，眼睛就透出什么背景。</p>
+    <p>右侧属性面板实时显示当前帧的 <code>path d</code> 片段、眼睛 transform、mask 结构。
+      打开「显示 DOM diff」可以看到：静止时几乎只有眼睛相关属性在变——这就是 diff 写入器的意义。</p>
+  </div>
+  <div class="col-demo">
+    <div class="paper demo svg-demo">
+      <div class="stage"></div>
+      <div class="panel">
+        <div class="panel-row" data-row="bodyD"><span class="k">body path[d]</span><span class="v">—</span></div>
+        <div class="panel-row" data-row="eyeD"><span class="k">mask eyeL[d]</span><span class="v">—</span></div>
+        <div class="panel-row" data-row="eyeTr"><span class="k">eye transform</span><span class="v">—</span></div>
+        <div class="panel-row" data-row="squash"><span class="k">squash g[transform]</span><span class="v">—</span></div>
+        <div class="panel-row" data-row="angles"><span class="k">姿态 / 眨眼</span><span class="v">—</span></div>
+        <div class="panel-row" data-row="mask"><span class="k">mask 结构</span><span class="v">—</span></div>
+      </div>
+      <div class="controls">
+        <button data-act="slow" aria-pressed="false">慢放 0.1×：关</button>
+        <button data-act="diff" aria-pressed="false">显示 DOM diff：关</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2. 径向轮廓 morph ============ -->
+<section class="section" id="sec-morph">
+  <div class="col-text">
+    <p class="sec-no">02</p>
+    <h2>形状 morph：径向轮廓插值</h2>
+    <p>怎么把圆形「变成」爱心？GrokBotMark 的做法是<strong>向 192 个角度方向发射线</strong>，
+      求每条射线与形状轮廓的交点，得到一个半径数组 <code>r(θ)</code>。
+      morph 就是对两个形状的 <code>r(θ)</code> <strong>逐角度线性插值</strong>，
+      插值权重由弹簧驱动——所以形变本身也带物理感。</p>
+    <p>原引擎的形状注册表有 <strong>20+ 种</strong>（cloud / square / sparkle / clover / heart /
+      star6 / teardrop / house / gem / egg / capsule…），但公开 API 只暴露
+      blob / flower / heart / star 四种。</p>
+    <p>右边拖 slider：圆形 → 六角星 → 爱心 → 水滴连续混合。打开「显示采样射线」可以看到
+      射线和交点；把采样数从 192 降到 8，看插值质量如何崩坏——采样密度就是这套方案的精度旋钮。</p>
+  </div>
+  <div class="col-demo">
+    <div class="paper demo">
+      <svg class="morph-canvas" viewBox="0 0 420 420" aria-label="径向轮廓 morph 演示">
+        <g class="rays"></g>
+        <path class="shape" d=""></path>
+        <g class="hits"></g>
+      </svg>
+      <p class="morph-label mono">—</p>
+      <div class="controls col">
+        <label class="ctl-row">形状混合
+          <input type="range" data-morph min="0" max="3" step="0.01" value="0" aria-label="形状混合滑杆">
+        </label>
+        <div class="tick-row mono"><span>圆</span><span>星</span><span>爱心</span><span>水滴</span></div>
+        <div class="ctl-row">
+          <label><input type="checkbox" data-rays> 显示采样射线与交点</label>
+          <label>采样数
+            <select data-count aria-label="采样数">
+              <option value="8">8</option>
+              <option value="24">24</option>
+              <option value="64">64</option>
+              <option value="192" selected>192（原引擎）</option>
+            </select>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3. 弹簧 ============ -->
+<section class="section" id="sec-spring">
+  <div class="col-text">
+    <p class="sec-no">03</p>
+    <h2>弹簧，不是定时器</h2>
+    <p>引擎里没有任何 <code>setTimeout</code> 动画，也没有 CSS transition。所有运动来自一个
+      <strong>手写的半隐式欧拉弹簧积分器</strong>，以 <strong>120Hz 固定子步</strong>推进：</p>
+    <pre class="code">v += (-2ζω·v - ω²·(x - target))·dt
+x += v·dt</pre>
+    <p>只调两个参数——刚度 <code>ω</code> 和阻尼 <code>ζ</code>——就能得到从 Q 弹到稳重的全部质感。
+      而传统的 ease-out 曲线是时间的函数：中途改变目标，它只能生硬跳变；弹簧只要改
+      <code>target</code>，速度天然连续。</p>
+    <p>零第三方动画库：没有 framer-motion，没有 gsap。</p>
+  </div>
+  <div class="col-demo">
+    <div class="paper demo spring-stage">
+      <div class="spring-flex">
+        <svg class="ball-stage" viewBox="0 0 140 200" aria-label="弹簧小球">
+          <line class="target-line" x1="10" y1="20" x2="130" y2="20"></line>
+          <g class="spring-ball"><circle cx="0" cy="0" r="22"></circle></g>
+        </svg>
+        <svg class="graph-stage" viewBox="0 0 560 180" aria-label="位移-时间曲线">
+          <line class="axis" x1="0" y1="166" x2="560" y2="166"></line>
+          <line class="axis dashed" x1="0" y1="20" x2="560" y2="20"></line>
+          <path class="ease-curve" d=""></path>
+          <path class="spring-curve" d=""></path>
+        </svg>
+      </div>
+      <div class="controls col">
+        <label class="ctl-row">刚度 ω = <span class="mono omega-val">10.0</span>
+          <input type="range" data-omega min="2" max="24" step="0.5" value="10" aria-label="刚度 ω">
+        </label>
+        <label class="ctl-row">阻尼 ζ = <span class="mono zeta-val">1.00</span>
+          <input type="range" data-zeta min="0.05" max="2.5" step="0.05" value="1" aria-label="阻尼 ζ">
+        </label>
+        <div class="ctl-row">
+          <button data-preset="10,0.25">欠阻尼 ζ=0.25</button>
+          <button data-preset="10,1">临界 ζ=1</button>
+          <button data-preset="10,1.8">过阻尼 ζ=1.8</button>
+          <button data-kick>重新冲击</button>
+          <label><input type="checkbox" data-compare> 对比 ease-out 曲线</label>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4. 球面上的眼睛 ============ -->
+<section class="section" id="sec-sphere">
+  <div class="col-text">
+    <p class="sec-no">04</p>
+    <h2>伪 3D：眼睛真的在球面上</h2>
+    <p>头部姿态是一组完整的旋转（原引擎用四元数存 pitch/yaw/roll）。眼睛不是贴在脸上的贴图：
+      眼睛脊线上的点<strong>绕球心做 3D 旋转，再正交投影</strong>到屏幕；转到背面的部分直接裁掉
+      ——眼睛真的会绕到球后面消失。</p>
+    <p>靠近边缘的眼睛被球面几何<strong>自然压缩</strong>：逆向时实测远侧眼宽 ≈ 近侧的
+      <strong>0.69 倍</strong>，这正是球面深度系数，不是手调的 hack。</p>
+    <p>右边<strong>拖拽球体</strong>旋转头部。切换「平面贴眼」看看常见省事方案什么样：
+      眼睛等宽平移、滑出边缘也不消失——瞬间就假了。</p>
+  </div>
+  <div class="col-demo">
+    <div class="paper demo">
+      <svg class="sphere-canvas" viewBox="0 0 420 350" aria-label="球面眼睛演示（可拖拽）">
+        <circle class="sphere-outline" cx="210" cy="175" r="110"></circle>
+        <g class="wire"></g>
+        <ellipse class="eye eye-l" cx="0" cy="0" rx="11" ry="15"></ellipse>
+        <ellipse class="eye eye-r" cx="0" cy="0" rx="11" ry="15"></ellipse>
+      </svg>
+      <div class="controls">
+        <label><input type="checkbox" data-sphere-mode checked> <span class="sphere-mode-label">球面投影（GrokBotMark 方案）</span></label>
+      </div>
+      <p class="width-ratio mono">转动头部，观察两只眼睛宽度比变化</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5. 眨眼与生命感 ============ -->
+<section class="section" id="sec-blink">
+  <div class="col-text">
+    <p class="sec-no">05</p>
+    <h2>眨眼与生命感</h2>
+    <p>眨眼不是循环动画：眼睑把眼睛纵向<strong>压扁成细 stadium（胶囊）</strong>，一次眨眼
+      <strong>0.26 秒、45% 处完全闭合</strong>。空闲眨眼由<strong>种子化 PRNG（xorshift）</strong>调度，
+      种子 = 头像 <code>sourceId</code> 的 <strong>FNV-1a 哈希</strong>，间隔 1.9–4.6 秒随机，
+      18% 概率来一次双眨。</p>
+    <p>所以同屏多个 bot 的眨眼节律<strong>各不相同、但永远确定</strong>——刷新一万次，
+      同一个 bot 的每一次眨眼都发生在同一时刻。随机的外表，确定的内心。</p>
+    <p>右边是某个 seed 的 30 秒眨眼时刻表（双眨可见）。改 seed 或随机一个：
+      节律立刻不同，但同一个 seed 永远一致。mini-bot 正按这张表实时眨眼。</p>
+  </div>
+  <div class="col-demo">
+    <div class="paper demo">
+      <div class="stage"></div>
+      <svg class="blink-timeline" viewBox="0 0 640 90" aria-label="30 秒眨眼时刻表">
+        <g class="marks"></g>
+      </svg>
+      <p class="mono blink-count">—</p>
+      <div class="controls">
+        <label>seed <input type="text" data-seed value="demo-seed" aria-label="种子"></label>
+        <button data-apply-seed>应用</button>
+        <button data-rand-seed>随机 seed</button>
+      </div>
+      <p class="mono seed-hash">—</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 6. 状态机与 recipe 洗牌 ============ -->
+<section class="section" id="sec-states">
+  <div class="col-text">
+    <p class="sec-no">06</p>
+    <h2>状态机与 recipe 洗牌</h2>
+    <p>原引擎有 <strong>40+ 个状态</strong>（idle / listening / thinking / blocked / finished /
+      waking…）。每个状态 = 若干条手工关键帧 <strong>recipe</strong>（position / rotation /
+      squash / lids / expression 轨道，每段独立三次贝塞尔缓动）。</p>
+    <p>idle 播放时<strong>种子化洗牌</strong>抽取下一条 clip、随机相位起播——所以待机永不重复。
+      <code>next + holdSeconds</code> 支持自动转移（如 blocked 持续 120 秒 → drowsy）；
+      尺寸小于 48px 时自动切换精简动画。</p>
+    <p>功能状态 = <strong>身体缩小让位 + 程序化装饰图元</strong>。点右边按钮试试：
+      thinking 的双点错相 0.12s 浮出（easeOutCubic 进 / easeOutBack 出）；
+      orbit 的五个圆盘沿椭圆轨道运行（0.0017 rad/ms，近大远小）；
+      alerting 的感叹号带阻尼抖动 <code>sin(n·42)·2.2·exp(-(n mod 2.2)·5.5)</code>。</p>
+  </div>
+  <div class="col-demo">
+    <div class="paper demo state-demo">
+      <div class="stage"></div>
+      <div class="controls">
+        <button data-state="idle" aria-pressed="true">idle</button>
+        <button data-state="thinking" aria-pressed="false">thinking</button>
+        <button data-state="orbit" aria-pressed="false">orbit</button>
+        <button data-state="alerting" aria-pressed="false">alerting</button>
+        <button data-state="finished" aria-pressed="false">finished</button>
+      </div>
+      <p class="mono clip-now">—</p>
+      <div class="clip-queue" aria-label="idle clip 洗牌队列"></div>
+      <p class="hint">idle 的 clip 洗牌队列：抽完一轮重新洗牌，随机相位 φ 起播</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 7. 横向对比 ============ -->
+<section class="section" id="sec-compare">
+  <div class="col-text">
+    <p class="sec-no">07</p>
+    <h2>横向对比：为什么选程序化 SVG</h2>
+    <p>Grok Bot 的头像需要：随时响应视线的眼睛、40+ 状态、任意尺寸渲染、离线可用。
+      在这四个约束下，素材型方案全部出局——剩下的就是代码。</p>
+  </div>
+  <div class="col-demo wide">
+    <div class="paper demo">
+      <table class="cmp-table">
+        <thead>
+          <tr><th></th><th>程序化 SVG<br><small>GrokBotMark</small></th><th>Lottie</th><th>视频 / GIF</th><th>WebGL shader</th><th>CSS 动画</th></tr>
+        </thead>
+        <tbody>
+          <tr><th>素材体积</th><td class="good">0 字节（代码即素材）</td><td class="mid">json 几十~几百 KB</td><td class="bad">数百 KB~MB 级</td><td class="mid">shader 小但需运行环境</td><td class="good">0 字节</td></tr>
+          <tr><th>实时交互（视线跟随 / 状态机）</th><td class="good">每帧重算，天然支持</td><td class="bad">播放固定时间轴</td><td class="bad">完全不可能</td><td class="good">可以</td><td class="mid">有限（keyframes 固定）</td></tr>
+          <tr><th>分辨率无关</th><td class="good">矢量，任意缩放</td><td class="good">矢量</td><td class="bad">像素，放大即糊</td><td class="good">可做到</td><td class="good">矢量</td></tr>
+          <tr><th>运行时代码量</th><td class="mid">一个引擎 JS 文件</td><td class="bad">需 lottie-web 运行时</td><td class="good">&lt;img&gt; 即可</td><td class="bad">WebGL 上下文 + shader 编译</td><td class="good">0</td></tr>
+          <tr><th>跨端可移植性</th><td class="good">任何支持 SVG 的环境</td><td class="mid">各端需对应 player</td><td class="good">哪里都能播</td><td class="mid">依赖 GPU/WebGL</td><td class="mid">仅 Web/浏览器</td></tr>
+          <tr><th>离线 / 无 GPU 可用</th><td class="good">纯 CPU 矢量运算</td><td class="good">可以</td><td class="good">可以</td><td class="bad">无 GPU 即死</td><td class="good">可以</td></tr>
+        </tbody>
+      </table>
+
+      <div class="wizard">
+        <h3>我该选哪种？</h3>
+        <div class="wizard-step">
+          <p>你的角色需要<strong>实时交互</strong>吗？（视线跟随、状态机、对用户输入做反应）</p>
+          <button data-answer="yes">需要</button>
+          <button data-answer="no">不需要</button>
+        </div>
+        <div class="wizard-step" hidden>
+          <p>能接受<strong>大体积素材</strong>、且内容一旦导成就不可逐帧程序化修改吗？</p>
+          <button data-answer="yes">能接受</button>
+          <button data-answer="no">不能</button>
+        </div>
+        <div class="wizard-step" hidden>
+          <p>目标环境能保证 <strong>GPU / 现代浏览器能力</strong>吗？</p>
+          <button data-answer="yes">能</button>
+          <button data-answer="no">不能/不确定</button>
+        </div>
+        <div class="wizard-result" hidden>
+          <p class="verdict"></p>
+          <button data-wizard-reset>重新选择</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 8. 结尾 ============ -->
+<section class="section" id="sec-end">
+  <div class="col-text">
+    <p class="sec-no">08</p>
+    <h2>看不见的工程细节</h2>
+    <p>动画引擎的高级感，一半来自这些没人注意的角落：</p>
+    <ul class="checklist">
+      <li><code>requestAnimationFrame</code> 驱动，60fps 上限节流</li>
+      <li><code>document.hidden</code> 时暂停整个循环</li>
+      <li><code>IntersectionObserver</code> 离屏停帧——看不见的 bot 不耗 CPU</li>
+      <li>动画静止后自动休眠，事件到来再唤醒</li>
+      <li><code>prefers-reduced-motion</code> 时完全静态</li>
+      <li>DOM diff 写入器：结构不变只写 attribute，变了才重建节点</li>
+      <li>尺寸 &lt; 48px 自动切精简动画</li>
+    </ul>
+    <p class="footnote">本页面自身就是这套哲学的实践：<strong>0 依赖、0 构建、0 素材</strong>，
+      纯 HTML + CSS + 原生 ES modules；上面每一个 demo 都是实时计算的，
+      并且同样遵守离屏休眠与 reduced-motion。<br>
+      文中全部结论来自对 Grok Bot（Electron, macOS）app.asar 解包后的逆向分析。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="footer">
+  <p>GrokBotMark 解剖 · 逆向工程笔记 · 本页所有动画均为程序化生成</p>
+</footer>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

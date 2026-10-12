@@ -1,0 +1,37 @@
+// main.js — 装配 hero 与各版块
+import { createMiniBot } from './mini-bot.js';
+import { init as initSvg } from './sections/svg-pipeline.js';
+import { init as initMorph } from './sections/morph.js';
+import { init as initSpring } from './sections/spring.js';
+import { init as initSphere } from './sections/sphere.js';
+import { init as initBlink } from './sections/blink.js';
+import { init as initStates } from './sections/states.js';
+import { init as initCompare } from './sections/compare.js';
+
+// Hero：实时 mini-bot，视线跟随鼠标
+createMiniBot(document.querySelector('.hero-stage'), { seed: 0xB07, size: 220 });
+
+// 各版块
+initSvg(document.querySelector('#sec-svg'));
+initMorph(document.querySelector('#sec-morph'));
+initSpring(document.querySelector('#sec-spring'));
+initSphere(document.querySelector('#sec-sphere'));
+initBlink(document.querySelector('#sec-blink'));
+initStates(document.querySelector('#sec-states'));
+initCompare(document.querySelector('#sec-compare'));
+
+// 滚动进场（reduced-motion 时直接全部可见）
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+if (!reduced) {
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      if (e.isIntersecting) { e.target.classList.add('inview'); io.unobserve(e.target); }
+    }
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.section, .hero-inner').forEach((el) => {
+    el.classList.add('reveal');
+    io.observe(el);
+  });
+}
+
+document.documentElement.classList.add('js-ready');
