@@ -60,7 +60,9 @@ function rayHit(poly, th) {
     if (Math.abs(den) < 1e-9) continue;
     const t = (ax * sy - ay * sx) / den;
     const u = (ax * dy - ay * dx) / den;
-    if (t > 0 && u >= 0 && u <= 1 && t < best) best = t;
+    // u 需要容差：射线恰好穿过共享顶点时，浮点会让一段给出 u=1+ε、
+    // 下一段 u=-ε，两段都被拒 → r=0，轮廓上出现一条扎进圆心的缝
+    if (t > 0 && u >= -1e-9 && u <= 1 + 1e-9 && t < best) best = t;
   }
   return best === Infinity ? 0 : best;
 }
