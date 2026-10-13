@@ -290,9 +290,20 @@ pre.code {
 .footer a { color: var(--accent-bright); text-decoration: none; }
 
 /* ---------- 动画编辑器（editor.html） ---------- */
-.editor { max-width: 1240px; display: grid; grid-template-columns: 360px 1fr; gap: 28px; padding: 48px 28px; align-items: start; }
+.editor2 { max-width: 1240px; display: grid; gap: 22px; padding: 48px 28px; }
+.ed2-top { display: grid; grid-template-columns: 380px 1fr; gap: 22px; align-items: stretch; }
 .ed-stage { width: 280px; margin: 0 auto; }
-.ed-h { color: var(--ink); font-size: 16px; margin-bottom: 14px; }
+.ed-transport { display: flex; gap: 14px; align-items: center; margin-top: 14px; justify-content: center; }
+.ed-transport button {
+  font-family: var(--sans); font-size: 13px; cursor: pointer; min-width: 84px;
+  border: 1px solid #d4d4dd; background: #fff; color: var(--ink);
+  border-radius: 999px; padding: 7px 16px;
+}
+.ed-transport button:hover { border-color: var(--accent); color: var(--accent); }
+.ed-transport .mono { color: #555; font-size: 13px; }
+.ed-transport label { font-size: 13px; color: #333; display: inline-flex; gap: 6px; align-items: center; }
+.ed-h { color: var(--ink); font-size: 16px; margin: 14px 0 12px; }
+.ed-h:first-child { margin-top: 0; }
 .ed-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; margin-bottom: 8px; }
 .ed-form label { font-size: 13px; color: #555; display: flex; flex-direction: column; gap: 4px; }
 .ed-form input, .ed-form select {
@@ -300,33 +311,75 @@ pre.code {
   border-radius: 8px; background: #fff; color: var(--ink);
 }
 .ed-form .ed-check { flex-direction: row; align-items: center; gap: 8px; grid-column: 1 / -1; }
-.ed-track { border-top: 1px solid #e6e6ee; padding: 14px 0; }
-.ed-track-head { display: flex; gap: 10px; align-items: baseline; margin-bottom: 8px; }
-.ed-track-head b { color: var(--ink); font-size: 14px; }
-.ed-track-head .hint { margin-top: 0; flex: 1; }
-.ed-track-head button, .ed-del {
-  font-family: var(--sans); font-size: 12px; cursor: pointer;
-  border: 1px solid #d4d4dd; background: #fff; color: var(--ink);
-  border-radius: 999px; padding: 3px 10px;
+
+/* 时间轴 */
+.ed2-tl-scroll { position: relative; overflow-x: auto; padding-bottom: 4px; }
+.ed2-tl-ruler { display: flex; height: 26px; user-select: none; cursor: ew-resize; }
+.ed2-corner { flex-shrink: 0; }
+.ed2-ruler-track { position: relative; flex-shrink: 0; border-bottom: 1px solid #e4e4ea; }
+.ed2-ruler-track i {
+  position: absolute; bottom: 0; width: 1px; height: 6px; background: #c8c8d4;
 }
-.ed-track-head button:hover { border-color: var(--accent); color: var(--accent); }
-.ed-del { border: none; color: #b03030; padding: 2px 6px; }
-.ed-lane { position: relative; height: 14px; background: #f0f0f5; border-radius: 7px; margin-bottom: 8px; }
-.ed-lane i { position: absolute; top: 3px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-left: -4px; }
-.ed-lane i.expr { background: #ff8a3d; }
-.ed-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-.ed-table th { text-align: left; color: #999; font-weight: 400; padding: 3px 6px; }
-.ed-table td { padding: 3px 6px; vertical-align: bottom; }
-.ed-table input[type="number"] { width: 62px; font-size: 12px; padding: 3px 5px; border: 1px solid #d4d4dd; border-radius: 6px; }
-.ed-table select { font-size: 12px; padding: 2px 4px; border: 1px solid #d4d4dd; border-radius: 6px; }
-.ed-mini { display: flex; flex-direction: column; font-size: 11px; color: #999; gap: 2px; }
-.ed-ease input { width: 46px !important; margin-right: 3px; }
+.ed2-ruler-track i.major { height: 11px; background: #9a9aac; }
+.ed2-ruler-track b {
+  position: absolute; top: 0; font-size: 10px; font-weight: 400; color: #999;
+  font-family: var(--mono);
+}
+.ed2-lane { display: flex; height: 34px; align-items: stretch; }
+.ed2-lane-label {
+  flex-shrink: 0; display: flex; align-items: center; gap: 7px;
+  font-size: 12.5px; color: #333; padding-right: 8px;
+  position: sticky; left: 0; background: #fff; z-index: 2;
+}
+.ed2-lane-label i { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+.ed2-add {
+  margin-left: auto; border: none; background: none; color: #aaa; font-size: 15px;
+  cursor: pointer; padding: 0 2px; line-height: 1;
+}
+.ed2-add:hover { color: var(--accent); }
+.ed2-lane-track {
+  position: relative; flex-shrink: 0; cursor: copy;
+  background: repeating-linear-gradient(90deg, transparent 0 calc(140px - 1px), #f0f0f5 calc(140px - 1px) 140px);
+  border-bottom: 1px solid #f0f0f5;
+}
+.ed2-kf {
+  position: absolute; top: 50%; width: 11px; height: 11px; margin: -5.5px 0 0 -5.5px;
+  background: var(--kc, #2e6bff); transform: rotate(45deg); border-radius: 2.5px;
+  cursor: ew-resize; border: 1.5px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,0.15);
+}
+.ed2-kf.sel { box-shadow: 0 0 0 2px var(--kc, #2e6bff); z-index: 1; }
+.ed2-playhead {
+  position: absolute; top: 0; bottom: 0; width: 2px; background: #e14a4a;
+  pointer-events: none; z-index: 3;
+}
+.ed2-playhead::before {
+  content: ""; position: absolute; top: 0; left: -5px;
+  border: 6px solid transparent; border-top: 8px solid #e14a4a;
+}
+
+/* 检查器 · 贝塞尔缓动编辑器 */
+.ed2-ease-row { display: flex; gap: 18px; align-items: flex-start; }
+#ed-bezier {
+  width: 200px; flex-shrink: 0; background: #fff; border: 1px solid #e4e4ea;
+  border-radius: 10px; touch-action: none;
+}
+.bz-grid { stroke: #eee; stroke-width: 1; }
+.bz-grid.dash { stroke-dasharray: 4 4; }
+.bz-arm { stroke: #c8c8d4; stroke-width: 1; }
+.bz-curve { stroke: var(--accent); stroke-width: 2; fill: none; }
+.bz-handle { fill: #fff; stroke: var(--accent); stroke-width: 2; cursor: grab; }
+.ed-ease-nums { display: flex; gap: 6px; margin-top: 8px; }
+.ed-ease-nums input { width: 56px; font-size: 12px; padding: 3px 5px; border: 1px solid #d4d4dd; border-radius: 6px; }
+.ed2-inspector select {
+  font-size: 13px; padding: 5px 8px; border: 1px solid #d4d4dd; border-radius: 8px;
+  background: #fff; color: var(--ink); max-width: 100%;
+}
 .ed-json {
-  width: 100%; height: 220px; box-sizing: border-box; resize: vertical;
+  width: 100%; height: 200px; box-sizing: border-box; resize: vertical;
   font-family: var(--mono); font-size: 12px; line-height: 1.5;
   border: 1px solid #d4d4dd; border-radius: 10px; padding: 10px; color: var(--ink);
 }
-@media (max-width: 960px) { .editor { grid-template-columns: 1fr; } }
+@media (max-width: 960px) { .ed2-top { grid-template-columns: 1fr; } }
 
 /* ---------- 响应式：移动端上下布局 ---------- */
 @media (max-width: 860px) {
