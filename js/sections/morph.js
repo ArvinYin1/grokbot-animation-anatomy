@@ -1,5 +1,5 @@
 // 第 2 节：径向轮廓 morph —— 向 N 个角度发射线求交点得 r(θ)，逐角度 lerp
-import { smoothClosedPath } from '../mini-bot.js';
+import { smoothClosedPath } from '../lib.js';
 
 const SVGNS = 'http://www.w3.org/2000/svg';
 const f = (n) => Math.round(n * 100) / 100;

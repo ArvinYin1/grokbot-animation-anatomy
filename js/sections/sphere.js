@@ -1,5 +1,5 @@
 // 第 4 节：球面上的眼睛 —— 拖拽旋转头部，对比「平面贴眼 vs 球面投影」
-import { projectEye, rafLoop } from '../mini-bot.js';
+import { projectEye, rafLoop } from '../lib.js';
 
 const f = (n) => Math.round(n * 100) / 100;
 

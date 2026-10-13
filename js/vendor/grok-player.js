@@ -1852,11 +1852,14 @@ export function createGrokBot(container, opts = {}) {
       }
       wake();
     }
+    // 修复：opts.follow 此前只透传了 isGazeAlways，从未挂 pointermove 监听
+    if (opts.follow && !isStatic && frozenAt == null) setFollow(true);
     for (const f of pending) f();
     pending.length = 0;
   }).catch(err => { loadError = err; console.error("[grok-player] 数据加载失败:", err); });
 
-  const whenReady = f => () => { destroyed || (ready ? f() : pending.push(f)); };
+  // whenReady：未 ready 时排队，ready 后直调；必须透传参数（修复 setState('thinking') 变 setState(undefined) 被静默丢弃）
+  const whenReady = f => (...args) => { if (!destroyed) (ready ? f(...args) : pending.push(() => f(...args))); };
   const staticRefresh = () => { // 静态模式下 API 变更后重新 settle 一帧
     if (!ready) return;
     for (let i = 0; i < OE; i++) nx.advance(LE), rt.advance(LE);
@@ -1881,6 +1884,13 @@ export function createGrokBot(container, opts = {}) {
     setResting: whenReady(v => { nx.setResting(v); after(); }),
     setEmphasis: whenReady(v => { nx.setEmphasis(v); after(); }),
     setGlow: whenReady(g => { rt.setGlow(g); after(); }),
+    // 逐帧步进（仅 frozenAt 确定性模式）：推进 n 帧（1/60s）并重渲染一帧
+    step(n = 1) {
+      if (!ready || destroyed || frozenAt == null) return;
+      const dt = 1 / 60;
+      for (let i = 0; i < n; i++) nx.advance(dt), rt.advance(dt);
+      renderFrame();
+    },
     destroy() {
       if (destroyed) return;
       destroyed = !0;

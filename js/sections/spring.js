@@ -1,6 +1,6 @@
 // 第 3 节：弹簧，不是定时器 —— 半隐式欧拉积分游乐场
 // v += (-2ζω·v - ω²·(x - target))·dt ; x += v·dt （120Hz 固定子步）
-import { Spring, rafLoop } from '../mini-bot.js';
+import { Spring, rafLoop } from '../lib.js';
 
 const SVGNS = 'http://www.w3.org/2000/svg';
 

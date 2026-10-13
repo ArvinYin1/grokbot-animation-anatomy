@@ -54,29 +54,32 @@
     <p>GrokBotMark 在 JS 里维护一棵<strong>虚拟 SVG 节点树</strong>，每帧重新计算所有图形参数，
       再由一个 <strong>DOM diff 写入器</strong>把变化落到真实 DOM：结构不变时只写
       <code>attribute</code>，结构变了才 <code>createElementNS</code> 重建。</p>
-    <p>身体是 <code>&lt;path fill&gt;</code>；眼睛不是盖在身体上的白色形状，而是用 SVG
-      <code>&lt;mask&gt;</code> 从身体上<strong>挖出来的洞</strong>——所以身体下面是
-      什么背景，眼睛就透出什么背景。</p>
-    <p>右侧属性面板实时显示当前帧的 <code>path d</code> 片段、眼睛 transform、mask 结构。
-      打开「显示 DOM diff」可以看到：静止时几乎只有眼睛相关属性在变——这就是 diff 写入器的意义。</p>
+    <p>身体是 <code>&lt;path fill&gt;</code>；眼睛不是盖在身体上的白色形状，而是从身体上<strong>挖出来的洞</strong>——所以身体下面是
+      什么背景，眼睛就透出什么背景。挖洞有两条路：sphere 模式下直接把眼睛的地平线弧
+      <strong>布尔裁剪进身体 path</strong>；morph 状态下改用 SVG <code>&lt;mask&gt;</code>。</p>
+    <p>右侧属性面板实时显示当前帧的 <code>path d</code> 片段与各层 <code>transform</code>，
+      并用 MutationObserver 聚合每帧的<strong>真实 DOM 写入</strong>。打开「显示 DOM diff」
+      可以看到：idle 时<strong>每帧只有一次写入</strong>——身体 <code>path[d]</code>
+      （眼睛的裁切弧就长在这条 path 里，所以它的长度随眼神逐帧变化）。</p>
   </div>
   <div class="col-demo">
     <div class="paper demo svg-demo">
       <div class="stage"></div>
       <div class="panel">
         <div class="panel-row" data-row="bodyD"><span class="k">body path[d]</span><span class="v">—</span></div>
-        <div class="panel-row" data-row="eyeD"><span class="k">mask eyeL[d]</span><span class="v">—</span></div>
-        <div class="panel-row" data-row="eyeTr"><span class="k">eye transform</span><span class="v">—</span></div>
-        <div class="panel-row" data-row="squash"><span class="k">squash g[transform]</span><span class="v">—</span></div>
-        <div class="panel-row" data-row="angles"><span class="k">姿态 / 眨眼</span><span class="v">—</span></div>
+        <div class="panel-row" data-row="eyeD"><span class="k">mask 眼洞[d]</span><span class="v">—</span></div>
+        <div class="panel-row" data-row="headTr"><span class="k">head g[transform]</span><span class="v">—</span></div>
+        <div class="panel-row" data-row="zoomTr"><span class="k">zoom g[transform]</span><span class="v">—</span></div>
+        <div class="panel-row" data-row="dom"><span class="k">帧内 DOM 写入</span><span class="v">—</span></div>
         <div class="panel-row" data-row="mask"><span class="k">mask 结构</span><span class="v">—</span></div>
       </div>
       <div class="controls">
-        <button data-act="slow" aria-pressed="false">慢放 0.1×：关</button>
+        <button data-act="step" aria-pressed="false">逐帧步进：关</button>
+        <button data-act="step1" hidden>+1 帧</button>
         <button data-act="diff" aria-pressed="false">显示 DOM diff：关</button>
       </div>
-      <p class="hint">本卡片为教学用简化引擎（mini-bot），用来看清 diff 写入器的工作方式；
-        hero 与第 05/06 节的 bot 是原版引擎的忠实移植。</p>
+      <p class="hint">本卡片与 hero、05/06 节同为原版引擎移植（grok-player）；属性面板用
+        MutationObserver 观察真实 SVG 子树的每帧写入。「逐帧步进」把引擎切到确定性模式（frozenAt），一次只推进 1/60 秒。</p>
     </div>
   </div>
 </section>
@@ -325,7 +328,7 @@ x += v·dt</pre>
       <li>尺寸 &lt; 48px 自动切精简动画</li>
     </ul>
     <p class="footnote">本页面自身就是这套哲学的实践：<strong>0 第三方运行时依赖、0 构建</strong>，
-      纯 HTML + CSS + 原生 ES modules；showcase 位置的 bot 运行原版引擎的移植
+      纯 HTML + CSS + 原生 ES modules；hero 与 01/05/06 节的 bot 运行原版引擎的移植
       （<code>js/vendor/grok-player.js</code>）与从本机 app 提取的动画数据
       （<code>js/vendor/grok-recipes.json</code>），其余 demo 实时计算，
       全部遵守离屏休眠与 reduced-motion。<br>

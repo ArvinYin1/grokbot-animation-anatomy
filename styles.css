@@ -87,14 +87,12 @@ body {
   width: min(300px, 70vw); aspect-ratio: 1; margin: 0 auto;
   display: flex; align-items: center; justify-content: center;
 }
-.hero-stage .mini-bot { width: 82%; }
 
 .demo { padding: 22px; }
 .demo .stage {
   width: min(240px, 60vw); aspect-ratio: 1; margin: 0 auto;
   display: flex; align-items: center; justify-content: center;
 }
-.demo .stage .mini-bot { width: 100%; }
 
 /* ---------- 版块布局 ---------- */
 main { max-width: 1100px; margin: 0 auto; padding: 0 28px; }
@@ -170,7 +168,7 @@ pre.code {
   0% { background: rgba(46, 107, 255, 0.45); }
   100% { background: transparent; }
 }
-.mini-bot [diff-hot] { stroke: var(--accent); stroke-width: 1; }
+.svg-demo svg [diff-hot] { stroke: var(--accent); stroke-width: 2; }
 
 /* ---------- 第 2 节：morph ---------- */
 .morph-canvas { width: 100%; display: block; }
