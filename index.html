@@ -89,13 +89,14 @@
   <div class="col-text">
     <p class="sec-no">02</p>
     <h2>形状 morph：径向轮廓插值</h2>
-    <p>怎么把圆形「变成」爱心？GrokBotMark 的做法是<strong>向 192 个角度方向发射线</strong>，
-      求每条射线与形状轮廓的交点，得到一个半径数组 <code>r(θ)</code>。
+    <p>怎么把圆形「变成」爱心？GrokBotMark 的做法是<strong>向 192 个基准角度方向发射线</strong>
+      （再叠加轮廓顶点处的角度），求每条射线与形状轮廓的交点，得到一个半径数组 <code>r(θ)</code>。
       morph 就是对两个形状的 <code>r(θ)</code> <strong>逐角度线性插值</strong>，
       插值权重由弹簧驱动——所以形变本身也带物理感。</p>
-    <p>原引擎的形状注册表有 <strong>20+ 种</strong>（cloud / square / sparkle / clover / heart /
-      star6 / teardrop / house / gem / egg / capsule…），但公开 API 只暴露
-      blob / flower / heart / star 四种。</p>
+    <p>原引擎的形状注册表有 <strong>25 种</strong>（cloud / square / sparkle / clover / heartChubby /
+      star6 / teardrop / house / gem / egg / capsule…），但对外只暴露几个别名：
+      blob / sphereWide / arch / spark / star / heart / hexagon（见提取数据
+      <code>grok-recipes.json</code> 的 <code>shapes.aliases</code>）。</p>
     <p>右边拖 slider：圆形 → 六角星 → 爱心 → 水滴连续混合。打开「显示采样射线」可以看到
       射线和交点；把采样数从 192 降到 8，看插值质量如何崩坏——采样密度就是这套方案的精度旋钮。</p>
   </div>
@@ -269,7 +270,7 @@ x += v·dt</pre>
   <div class="col-text">
     <p class="sec-no">07</p>
     <h2>横向对比：为什么选程序化 SVG</h2>
-    <p>Grok Bot 的头像需要：随时响应视线的眼睛、40+ 状态、任意尺寸渲染、离线可用。
+    <p>Grok Bot 的头像需要：随时响应视线的眼睛、53 个状态、任意尺寸渲染、离线可用。
       在这四个约束下，素材型方案全部出局——剩下的就是代码。</p>
   </div>
   <div class="col-demo wide">
