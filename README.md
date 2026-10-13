@@ -4,7 +4,7 @@
 
 An interactive explainer page (in Chinese) dissecting how the **Grok Bot** macOS app's avatar animation engine works — and why its procedural-SVG approach beats Lottie, video/GIF, WebGL shaders and CSS animation for a living, interactive character.
 
-The page practices what it preaches: **0 dependencies, 0 build step, 0 asset bytes** — plain HTML + CSS + native ES modules, every demo computed live.
+The page practices what it preaches: **0 third-party runtime dependencies, 0 build step** — plain HTML + CSS + native ES modules, every demo computed live. The showcase bots (hero, blink and state-machine sections) run `js/vendor/grok-player.js`, a faithful line-level port of the original engine, driven by `js/vendor/grok-recipes.json` (animation data extracted from the local app).
 
 ## Live demo / Run
 
@@ -23,13 +23,13 @@ python3 -m http.server 8000
 - **Shape morph: radial outline interpolation** — 192 ray samples, per-angle lerp, sampling-density comparison
 - **Springs, not timers** — a 120 Hz semi-implicit Euler integrator playground vs ease-out
 - **Pseudo-3D: the eyes live on a sphere** — Rodrigues rotation + orthographic projection, flat-vs-sphere comparison
-- **Blinks & liveliness** — seeded-PRNG blink schedule, deterministic yet organic
-- **State machine & recipe shuffle** — 40+ states, keyframed clips shuffled with random phase
+- **Blinks & liveliness** — blinks are clip-embedded keyframe events (0.26 s, closed at 45%) + imperative `blink()`; no ambient scheduler exists in the original bundle
+- **State machine & recipe shuffle** — 53 states, seeded-PRNG clip shuffle with random phase; showcase runs the ported original engine
 - **Head-to-head comparison** — procedural SVG vs Lottie vs video/GIF vs WebGL vs CSS, plus a decision wizard
 
 ## Source
 
-All findings come from static analysis of the unpacked `app.asar` of Grok Bot (Electron, macOS), for study and research only. This project contains **no code or assets from the original app** — every demo is an independent reimplementation. Grok and x.ai trademarks belong to their owners.
+All findings come from static analysis of the unpacked `app.asar` of Grok Bot (Electron, macOS), for study and research only. `js/vendor/grok-player.js` is a **re-written port** of the engine logic (line-level, frame-verified against the original); `js/vendor/grok-recipes.json` is **animation data extracted from the local app** (clip keyframes, state registry, expressions, constants). The underlying design and data remain the property of their original owners; this material is published for study only and will be taken down on request. Grok and x.ai trademarks belong to their owners.
 
 See also: [bloub](https://github.com/jeremy-prt/bloub) — another independent recreation, measured frame-by-frame from video.
 

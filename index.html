@@ -39,7 +39,7 @@
     </div>
     <div class="hero-stage-wrap">
       <div class="hero-stage paper"></div>
-      <p class="stage-caption">实时 mini-bot（本页引擎）—— 动一下鼠标，它会看你</p>
+      <p class="stage-caption">原版引擎移植（grok-player）· 原版动画数据 —— 动一下鼠标，它会看你</p>
     </div>
   </div>
 </header>
@@ -75,6 +75,8 @@
         <button data-act="slow" aria-pressed="false">慢放 0.1×：关</button>
         <button data-act="diff" aria-pressed="false">显示 DOM diff：关</button>
       </div>
+      <p class="hint">本卡片为教学用简化引擎（mini-bot），用来看清 diff 写入器的工作方式；
+        hero 与第 05/06 节的 bot 是原版引擎的忠实移植。</p>
     </div>
   </div>
 </section>
@@ -204,28 +206,28 @@ x += v·dt</pre>
   <div class="col-text">
     <p class="sec-no">05</p>
     <h2>眨眼与生命感</h2>
-    <p>眨眼不是循环动画：眼睑把眼睛纵向<strong>压扁成细 stadium（胶囊）</strong>，一次眨眼
-      <strong>0.26 秒、45% 处完全闭合</strong>。空闲眨眼由<strong>种子化 PRNG（xorshift）</strong>调度，
-      种子 = 头像 <code>sourceId</code> 的 <strong>FNV-1a 哈希</strong>，间隔 1.9–4.6 秒随机，
-      18% 概率来一次双眨。</p>
-    <p>所以同屏多个 bot 的眨眼节律<strong>各不相同、但永远确定</strong>——刷新一万次，
-      同一个 bot 的每一次眨眼都发生在同一时刻。随机的外表，确定的内心。</p>
-    <p>右边是某个 seed 的 30 秒眨眼时刻表（双眨可见）。改 seed 或随机一个：
-      节律立刻不同，但同一个 seed 永远一致。mini-bot 正按这张表实时眨眼。</p>
+    <p>眨眼不是独立调度器，而是<strong>写在 clip 里的关键帧事件</strong>：clip 的 expression 轨道上
+      一个 <code>v:"blink"</code> 事件会被编译器展开成三段 lids 关键帧——睁开 →
+      <strong>0.26×0.45 秒处完全闭合</strong> → 0.26 秒处重新睁开，缓动 <code>[.42,0,.58,1]</code>。
+      眼睑把眼睛纵向压扁成细 stadium（胶囊）。</p>
+    <p>除 clip 内嵌事件外，还有两个来源：命令式 <code>blink()</code> 调用（用户交互触发），
+      以及 through-blink 的表情切换（先闭眼再换表情睁开）。经逐行核对原 bundle：
+      <strong>不存在环境自动眨眼调度器</strong>——全 bundle 唯一的 <code>Math.random</code>
+      在网络重试退避里，与动画无关。「随机的外表」其实来自别处：idle 的 clip 洗牌（见下一节）。</p>
+    <p>右边是从提取数据 <code>grok-recipes.json</code> 直接画出的三条 idle clip 时间轴，
+      竖条 = 该 clip 内嵌的眨眼事件（Idle_D 里 2.07s 与 2.37s 那对就是一组双眨）。
+      上方是跑着真引擎的 bot；也可以点按钮手动触发一次 <code>blink()</code>。</p>
   </div>
   <div class="col-demo">
     <div class="paper demo">
       <div class="stage"></div>
-      <svg class="blink-timeline" viewBox="0 0 640 90" aria-label="30 秒眨眼时刻表">
-        <g class="marks"></g>
-      </svg>
-      <p class="mono blink-count">—</p>
+      <p class="mono clip-now">当前 clip：—</p>
       <div class="controls">
-        <label>seed <input type="text" data-seed value="demo-seed" aria-label="种子"></label>
-        <button data-apply-seed>应用</button>
-        <button data-rand-seed>随机 seed</button>
+        <button data-blink-now>手动 blink()</button>
       </div>
-      <p class="mono seed-hash">—</p>
+      <div class="clip-timelines"></div>
+      <p class="hint">真实数据：grok-recipes.json 中 Idle_A / Idle_B / Idle_D 的 expression 轨道；
+        橙色 = 双眨（间隔 &lt;0.6s 的一对）</p>
     </div>
   </div>
 </section>
@@ -235,31 +237,24 @@ x += v·dt</pre>
   <div class="col-text">
     <p class="sec-no">06</p>
     <h2>状态机与 recipe 洗牌</h2>
-    <p>原引擎有 <strong>40+ 个状态</strong>（idle / listening / thinking / blocked / finished /
+    <p>原引擎的状态注册表有 <strong>53 个状态</strong>（idle / listening / thinking / blocked / finished /
       waking…）。每个状态 = 若干条手工关键帧 <strong>recipe</strong>（position / rotation /
       squash / lids / expression 轨道，每段独立三次贝塞尔缓动）。</p>
     <p>idle 播放时<strong>种子化洗牌</strong>抽取下一条 clip、随机相位起播——所以待机永不重复。
       <code>next + holdSeconds</code> 支持自动转移（如 blocked 持续 120 秒 → drowsy）；
       尺寸小于 48px 时自动切换精简动画。</p>
-    <p>功能状态 = <strong>身体缩小让位 + 程序化装饰图元</strong>。点右边按钮试试：
-      thinking 的双点错相 0.12s 浮出（easeOutCubic 进 / easeOutBack 出）；
-      orbit 的五个圆盘沿椭圆轨道运行（0.0017 rad/ms，近大远小）；
-      alerting 的感叹号带阻尼抖动 <code>sin(n·42)·2.2·exp(-(n mod 2.2)·5.5)</code>。</p>
+    <p>功能状态 = <strong>身体缩小让位 + 程序化装饰图元</strong>。右边从 53 个状态里选了 7 个代表：
+      idle / listening / thinking / waiting / alerting / working / finished——点哪个播哪个，
+      下方显示状态机当前真实播放的 clip。</p>
+    <p><strong>这些动画是原版引擎的忠实移植（grok-player）+ 从本机 app 提取的原版动画数据，
+      不再是简化重实现。</strong>idle 的 clip 池、洗牌与相位全部由移植引擎内的种子化 PRNG 驱动。</p>
   </div>
   <div class="col-demo">
     <div class="paper demo state-demo">
       <div class="stage"></div>
-      <div class="controls">
-        <button data-state="idle" aria-pressed="true">idle</button>
-        <button data-state="thinking" aria-pressed="false">thinking</button>
-        <button data-state="orbit" aria-pressed="false">orbit</button>
-        <button data-state="alerting" aria-pressed="false">alerting</button>
-        <button data-state="finished" aria-pressed="false">finished</button>
-      </div>
-      <p class="mono clip-now">—</p>
-      <div class="clip-queue" aria-label="idle clip 洗牌队列"></div>
-      <p class="hint">右侧五态为<strong>简化重实现</strong>：运动参数来自逆向实测，并非原版的 keyframe recipe 数据</p>
-      <p class="hint">idle 的 clip 洗牌队列：抽完一轮重新洗牌，随机相位 φ 起播</p>
+      <div class="controls state-buttons"></div>
+      <p class="mono clip-now">正在播放：—</p>
+      <p class="mono clip-pool hint"></p>
     </div>
   </div>
 </section>
@@ -329,10 +324,13 @@ x += v·dt</pre>
       <li>DOM diff 写入器：结构不变只写 attribute，变了才重建节点</li>
       <li>尺寸 &lt; 48px 自动切精简动画</li>
     </ul>
-    <p class="footnote">本页面自身就是这套哲学的实践：<strong>0 依赖、0 构建、0 素材</strong>，
-      纯 HTML + CSS + 原生 ES modules；上面每一个 demo 都是实时计算的，
-      并且同样遵守离屏休眠与 reduced-motion。<br>
-      文中全部结论来自对 Grok Bot（Electron, macOS）app.asar 解包后的逆向分析。</p>
+    <p class="footnote">本页面自身就是这套哲学的实践：<strong>0 第三方运行时依赖、0 构建</strong>，
+      纯 HTML + CSS + 原生 ES modules；showcase 位置的 bot 运行原版引擎的移植
+      （<code>js/vendor/grok-player.js</code>）与从本机 app 提取的动画数据
+      （<code>js/vendor/grok-recipes.json</code>），其余 demo 实时计算，
+      全部遵守离屏休眠与 reduced-motion。<br>
+      文中全部结论来自对 Grok Bot（Electron, macOS）app.asar 解包后的逆向分析；
+      动画设计与数据版权归原所有者，仅供学习研究。</p>
   </div>
 </section>
 

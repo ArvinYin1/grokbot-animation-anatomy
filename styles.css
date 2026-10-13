@@ -209,15 +209,30 @@ pre.code {
 .blink-count { color: #555; margin-top: 8px; }
 .seed-hash { color: #999; margin-top: 6px; font-size: 12px; }
 
+/* 第 5 节：真实 clip 眨眼时刻表（HTML 版） */
+.clip-timelines { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+.clip-row { display: grid; grid-template-columns: 118px 1fr; gap: 10px; align-items: center; }
+.clip-name { color: #555; font-size: 12px; }
+.clip-track {
+  position: relative; height: 22px;
+  background: #fff; border: 1px solid #e4e4ea; border-radius: 6px;
+}
+.blink-mark {
+  position: absolute; top: 4px; bottom: 4px; min-width: 3px;
+  background: var(--accent); border-radius: 2px; transform: translateX(-50%);
+}
+.blink-mark.double { background: #ff8a3d; }
+
+/* grok-player 渲染的 svg（width/height 由内联属性给定） */
+.hero-stage svg, .demo .stage svg { max-width: 100%; height: auto; }
+
+/* 第 6 节：状态按钮 */
+.state-buttons { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); }
+.state-buttons button { padding: 6px 4px; font-family: var(--mono); font-size: 12px; }
+
 /* ---------- 第 6 节：状态机 ---------- */
 .clip-now { color: #333; margin-top: 14px; }
-.clip-queue { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
-.clip-chip {
-  font-family: var(--mono); font-size: 12px;
-  background: #efeff4; border: 1px solid #d8d8e2; color: #555;
-  border-radius: 8px; padding: 5px 10px;
-}
-.clip-chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.clip-pool { color: #777; }
 
 /* ---------- 第 7 节：对比 ---------- */
 .section .col-demo.wide { grid-column: 1 / -1; }
