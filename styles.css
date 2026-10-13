@@ -55,7 +55,7 @@ body {
 .hero { padding: 90px 28px 70px; }
 .hero-inner {
   max-width: 1100px; margin: 0 auto;
-  display: grid; grid-template-columns: 1.2fr 1fr; gap: 48px; align-items: center;
+  display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 48px; align-items: center;
 }
 .kicker {
   color: var(--accent-bright); font-size: 14px; letter-spacing: 0.04em; margin-bottom: 18px;
@@ -97,7 +97,7 @@ body {
 /* ---------- 版块布局 ---------- */
 main { max-width: 1100px; margin: 0 auto; padding: 0 28px; }
 .section {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 44px;
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 44px;
   padding: 90px 0; border-top: 1px solid #1c1c26;
   align-items: start;
 }
@@ -162,7 +162,7 @@ pre.code {
 }
 .panel-row { display: flex; gap: 12px; padding: 3px 6px; border-radius: 6px; white-space: nowrap; }
 .panel-row .k { color: #6a6a80; flex-shrink: 0; width: 128px; }
-.panel-row .v { color: #9fe8b1; overflow: hidden; text-overflow: ellipsis; }
+.panel-row .v { color: #9fe8b1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .panel-row.flash { animation: flash 0.6s ease-out; }
 @keyframes flash {
   0% { background: rgba(46, 107, 255, 0.45); }

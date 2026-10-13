@@ -1,7 +1,23 @@
 // 第 4 节：球面上的眼睛 —— 拖拽旋转头部，对比「平面贴眼 vs 球面投影」
-import { projectEye, rafLoop } from '../lib.js';
+// 球面侧不是示意数学，而是直接复用 grok-player.js 的原版管线：
+//   lb（欧拉→四元数）→ ir（四元数→3×3）→ ST（罗德里格斯 sinc 球面映射 +
+//   RM 前半球地平线裁剪）→ xT（弧线细分）→ 正交投影取 (x, y)。
+// 数据（眼球基向量 basis / 镜像标志 / 静止姿态 baseEulerDeg / neutral 眼睛
+// 描述符）全部来自 grok-recipes.json，与真引擎同源。
+import { rafLoop } from '../lib.js';
+import { lb, ir, ST, xT, kT } from '../vendor/grok-player.js';
 
+const DEG = Math.PI / 180;
 const f = (n) => Math.round(n * 100) / 100;
+
+// 平面贴眼模式的胶囊眼（屏幕空间，不做任何球面变换）
+function capsulePath(cx, cy, rw, rh) {
+  const s = Math.max(0, rh - rw);
+  return `M${f(cx - rw)} ${f(cy - s)}` +
+    `A${f(rw)} ${f(rw)} 0 0 1 ${f(cx + rw)} ${f(cy - s)}` +
+    `L${f(cx + rw)} ${f(cy + s)}` +
+    `A${f(rw)} ${f(rw)} 0 0 1 ${f(cx - rw)} ${f(cy + s)}Z`;
+}
 
 export function init(root) {
   const svg = root.querySelector('svg.sphere-canvas');
@@ -13,8 +29,9 @@ export function init(root) {
   const ratioEl = root.querySelector('.width-ratio');
 
   const CX = 210, CY = 175, R = 110;
-  let yaw = 26, pitch = 10, dragging = false, lastDrag = -10;
+  let yaw = 0, pitch = 0, dragging = false, lastDrag = -10; // 相对静止姿态的增量（度）
   let autoAmp = 1;
+  let data = null; // { basis, mirror, base, neutral }
 
   // 线框：赤道 + 三条经线（随姿态变化）
   const equator = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
@@ -39,53 +56,77 @@ export function init(root) {
   });
 
   function draw(t) {
+    if (!data) return;
     const spherical = modeToggle.checked;
     // 未被拖拽时缓慢自动摆动，拖拽后 2.5s 内淡出自动摆
     const idle = Math.max(0, Math.min(1, (t - lastDrag - 2.5) / 1.5));
     autoAmp += (idle - autoAmp) * 0.02;
     const y = yaw + Math.sin(t * 0.4) * 16 * autoAmp;
     const p = pitch + Math.sin(t * 0.27 + 1) * 6 * autoAmp;
+    const { basis, mirror, base, neutral } = data;
+    // 有效头部姿态 = 静止姿态 + 拖拽增量（与引擎的 euler 合成一致）
+    const effYaw = base[1] + y, effPitch = base[0] + p;
 
     // 线框
     equator.setAttribute('cx', CX); equator.setAttribute('cy', CY);
     equator.setAttribute('rx', R);
-    equator.setAttribute('ry', f(Math.max(2, R * Math.abs(Math.sin((p * Math.PI) / 180)))));
+    equator.setAttribute('ry', f(Math.max(2, R * Math.abs(Math.sin(effPitch * DEG)))));
     meridians.forEach((m, i) => {
-      const a = ((y + i * 60) * Math.PI) / 180;
+      const a = (effYaw + i * 60) * DEG;
       m.setAttribute('cx', CX); m.setAttribute('cy', CY);
       m.setAttribute('rx', f(Math.max(2, R * Math.abs(Math.cos(a)))));
       m.setAttribute('ry', R);
     });
 
-    // 眼睛
-    const eyes = [[eyeL, -24], [eyeR, 24]];
-    let wMin = 1, wMax = 0;
-    for (const [el, baseYaw] of eyes) {
-      if (spherical) {
-        const e = projectEye(y, p, baseYaw, 7);
-        wMin = Math.min(wMin, e.widthScale);
-        wMax = Math.max(wMax, e.widthScale);
-        if (!e.visible) { el.setAttribute('opacity', '0'); continue; }
-        el.setAttribute('opacity', '1');
-        const ex = CX + e.x * R, ey = CY - e.y * R;
-        el.setAttribute('transform',
-          `translate(${f(ex)} ${f(ey)}) rotate(${f(e.rot)}) scale(${f(e.widthScale)} 1)`);
+    if (spherical) {
+      // 原版：quat = lb(pitch, yaw, roll)，逐眼 ST → 单位球面裁剪环 → 正交投影
+      const m3 = ir(lb(effPitch * DEG, effYaw * DEG, base[2] * DEG));
+      const widths = [];
+      [eyeL, eyeR].forEach((el, a) => {
+        const rings = ST(neutral[a] ?? neutral[0], basis[a], mirror[a], m3, R);
+        let d = '', xMin = 1e9, xMax = -1e9;
+        for (const ring of rings) {
+          const pts = xT(ring, kT);
+          if (pts.length < 3) continue;
+          d += 'M' + pts.map(([px, py]) => `${f(CX + px * R)} ${f(CY - py * R)}`).join('L') + 'Z';
+          for (const [px] of pts) { if (px < xMin) xMin = px; if (px > xMax) xMax = px; }
+        }
+        if (!d) { el.setAttribute('display', 'none'); return; } // 转到背面：被地平线裁掉
+        el.removeAttribute('display');
+        el.setAttribute('d', d);
+        widths.push(xMax - xMin);
+      });
+      if (widths.length === 2 && (Math.abs(y) > 6 || Math.abs(p) > 6)) {
+        const lo = Math.min(...widths), hi = Math.max(...widths);
+        ratioEl.textContent = hi > 1e-6 ?
+          `远侧眼宽 / 近侧眼宽 = ${(lo / hi).toFixed(2)}（原版球面数学实时计算，非手调）` :
+          '一只眼睛已完全转到球背面';
       } else {
-        // 平面贴眼：线性平移、不压缩、不穿帮裁切（转过边缘仍然完整显示）
-        const ex = CX + baseYaw * 1.6 + (y / 50) * R * 0.72;
-        const ey = CY - 12 + (p / 50) * R * 0.5;
-        el.setAttribute('opacity', '1');
-        el.setAttribute('transform', `translate(${f(ex)} ${f(ey)})`);
+        ratioEl.textContent = '转动头部，观察两只眼睛宽度比变化';
       }
-    }
-    if (spherical && Math.abs(y) > 6) {
-      ratioEl.textContent =
-        `远侧眼宽 / 近侧眼宽 = ${(wMin / wMax).toFixed(2)}（原引擎实测 ≈ 0.69，即球面深度系数）`;
     } else {
-      ratioEl.textContent = spherical ? '转动头部，观察两只眼睛宽度比变化' :
-        '平面模式：两只眼睛永远等宽，转过边缘也不消失 —— 穿帮';
+      // 平面贴眼：线性平移、不压缩、不穿帮裁切（转过边缘仍然完整显示）
+      [eyeL, eyeR].forEach((el, a) => {
+        el.removeAttribute('display');
+        const ex = CX + (a === 0 ? -40 : 40) + (y / 50) * R * 0.72;
+        const ey = CY - 18 + (p / 50) * R * 0.5;
+        el.setAttribute('d', capsulePath(ex, ey, 0.13 * R, 0.285 * R));
+      });
+      ratioEl.textContent = '平面模式：两只眼睛永远等宽，转过边缘也不消失 —— 穿帮';
     }
   }
+
+  fetch('js/vendor/grok-recipes.json')
+    .then((r) => r.json())
+    .then((recipes) => {
+      data = {
+        basis: recipes.eyes.basis,
+        mirror: recipes.eyes.mirror,
+        base: recipes.eyes.baseEulerDeg,
+        neutral: recipes.expressions.neutral,
+      };
+      draw(0); // 静态首帧（reduced-motion / 截图场景也能看到眼睛）
+    });
 
   rafLoop(svg, (dt, t) => draw(t));
 }

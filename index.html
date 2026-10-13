@@ -181,11 +181,13 @@ x += v·dt</pre>
     <p class="sec-no">04</p>
     <h2>伪 3D：眼睛真的在球面上</h2>
     <p>头部姿态是一组完整的旋转（原引擎用四元数存 pitch/yaw/roll）。眼睛不是贴在脸上的贴图：
-      眼睛脊线上的点<strong>绕球心做 3D 旋转，再正交投影</strong>到屏幕；转到背面的部分直接裁掉
-      ——眼睛真的会绕到球后面消失。</p>
+      眼睛脊线上的点经<strong>罗德里格斯公式（含 sinc）映到单位球面、随头部做 3D 旋转，再正交投影</strong>到屏幕；
+      转到背面的部分沿地平线弧裁掉——眼睛真的会绕到球后面消失。</p>
     <p>靠近边缘的眼睛被球面几何<strong>自然压缩</strong>：逆向时实测远侧眼宽 ≈ 近侧的
       <strong>0.69 倍</strong>，这正是球面深度系数，不是手调的 hack。</p>
-    <p>右边<strong>拖拽球体</strong>旋转头部。切换「平面贴眼」看看常见省事方案什么样：
+    <p>右边<strong>拖拽球体</strong>旋转头部。球面侧跑的就是原引擎同一套数学
+      （grok-player 导出的 <code>lb/ir/ST/xT</code> + <code>grok-recipes.json</code> 的眼球基向量与
+      neutral 眼睛描述符），宽度比实时算给你看。切换「平面贴眼」看看常见省事方案什么样：
       眼睛等宽平移、滑出边缘也不消失——瞬间就假了。</p>
   </div>
   <div class="col-demo">
@@ -193,8 +195,8 @@ x += v·dt</pre>
       <svg class="sphere-canvas" viewBox="0 0 420 350" aria-label="球面眼睛演示（可拖拽）">
         <circle class="sphere-outline" cx="210" cy="175" r="110"></circle>
         <g class="wire"></g>
-        <ellipse class="eye eye-l" cx="0" cy="0" rx="11" ry="15"></ellipse>
-        <ellipse class="eye eye-r" cx="0" cy="0" rx="11" ry="15"></ellipse>
+        <path class="eye eye-l" d=""></path>
+        <path class="eye eye-r" d=""></path>
       </svg>
       <div class="controls">
         <label><input type="checkbox" data-sphere-mode checked> <span class="sphere-mode-label">球面投影（GrokBotMark 方案）</span></label>

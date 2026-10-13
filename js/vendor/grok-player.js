@@ -1902,3 +1902,6 @@ export function createGrokBot(container, opts = {}) {
   };
 }
 export { makeConfig, createRuntime, createStateMachine, buildModel, makeMorphGenerators, makeTrail };
+// 教学演示复用：原版球面眼睛数学（lb 欧拉→四元数 / ir 四元数→3×3 / Et 矩阵乘向量 /
+// ST 眼睛描述符→球面裁剪环 / xT 弧线细分点列，kT 为其步长）
+export { lb, ir, Et, ST, xT, kT };
