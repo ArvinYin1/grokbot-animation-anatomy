@@ -4,7 +4,9 @@
 
 一个面向开发者的中文交互式长页，讲解 macOS 应用 **Grok Bot**（Electron）中 bot 头像动画引擎的实现原理，以及程序化 SVG 方案相对于 Lottie / 视频 / WebGL shader / CSS 动画的优势。
 
-页面本身即是对这套哲学的实践：**0 第三方运行时依赖、0 构建**，纯 HTML + CSS + 原生 ES modules，所有 demo 实时计算。showcase 位置的 bot（hero、第 05/06 节）运行的是 `js/vendor/grok-player.js`——原版引擎的逐行移植，由 `js/vendor/grok-recipes.json`（从本机 app 提取的动画数据）驱动。
+页面本身即是对这套哲学的实践：**0 第三方运行时依赖、0 构建**，纯 HTML + CSS + 原生 ES modules，所有 demo 实时计算。showcase 位置的 bot（hero、第 05/06/07 节）运行的是 `js/vendor/grok-player.js`——原版引擎的逐行移植，由 `js/vendor/grok-recipes.json`（从本机 app 提取的动画数据）驱动。
+
+另有 **[动画编辑器](editor.html)**（`/editor.html`）：基于同一引擎的 clip/状态编辑器——可视化编辑关键帧轨道（position / rotation / squash / scale / lids / expression）、缓动与状态配置（face / morph / next / holdSeconds），真引擎实时预览，导出与原引擎同构的 JSON。
 
 ## 在线预览 / 运行
 

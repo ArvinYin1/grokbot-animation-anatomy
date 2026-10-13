@@ -287,6 +287,46 @@ pre.code {
   text-align: center; color: #55556a; font-size: 13px;
   padding: 40px 20px 60px; border-top: 1px solid #1c1c26;
 }
+.footer a { color: var(--accent-bright); text-decoration: none; }
+
+/* ---------- 动画编辑器（editor.html） ---------- */
+.editor { max-width: 1240px; display: grid; grid-template-columns: 360px 1fr; gap: 28px; padding: 48px 28px; align-items: start; }
+.ed-stage { width: 280px; margin: 0 auto; }
+.ed-h { color: var(--ink); font-size: 16px; margin-bottom: 14px; }
+.ed-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; margin-bottom: 8px; }
+.ed-form label { font-size: 13px; color: #555; display: flex; flex-direction: column; gap: 4px; }
+.ed-form input, .ed-form select {
+  font-size: 13px; padding: 5px 8px; border: 1px solid #d4d4dd;
+  border-radius: 8px; background: #fff; color: var(--ink);
+}
+.ed-form .ed-check { flex-direction: row; align-items: center; gap: 8px; grid-column: 1 / -1; }
+.ed-track { border-top: 1px solid #e6e6ee; padding: 14px 0; }
+.ed-track-head { display: flex; gap: 10px; align-items: baseline; margin-bottom: 8px; }
+.ed-track-head b { color: var(--ink); font-size: 14px; }
+.ed-track-head .hint { margin-top: 0; flex: 1; }
+.ed-track-head button, .ed-del {
+  font-family: var(--sans); font-size: 12px; cursor: pointer;
+  border: 1px solid #d4d4dd; background: #fff; color: var(--ink);
+  border-radius: 999px; padding: 3px 10px;
+}
+.ed-track-head button:hover { border-color: var(--accent); color: var(--accent); }
+.ed-del { border: none; color: #b03030; padding: 2px 6px; }
+.ed-lane { position: relative; height: 14px; background: #f0f0f5; border-radius: 7px; margin-bottom: 8px; }
+.ed-lane i { position: absolute; top: 3px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-left: -4px; }
+.ed-lane i.expr { background: #ff8a3d; }
+.ed-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.ed-table th { text-align: left; color: #999; font-weight: 400; padding: 3px 6px; }
+.ed-table td { padding: 3px 6px; vertical-align: bottom; }
+.ed-table input[type="number"] { width: 62px; font-size: 12px; padding: 3px 5px; border: 1px solid #d4d4dd; border-radius: 6px; }
+.ed-table select { font-size: 12px; padding: 2px 4px; border: 1px solid #d4d4dd; border-radius: 6px; }
+.ed-mini { display: flex; flex-direction: column; font-size: 11px; color: #999; gap: 2px; }
+.ed-ease input { width: 46px !important; margin-right: 3px; }
+.ed-json {
+  width: 100%; height: 220px; box-sizing: border-box; resize: vertical;
+  font-family: var(--mono); font-size: 12px; line-height: 1.5;
+  border: 1px solid #d4d4dd; border-radius: 10px; padding: 10px; color: var(--ink);
+}
+@media (max-width: 960px) { .editor { grid-template-columns: 1fr; } }
 
 /* ---------- 响应式：移动端上下布局 ---------- */
 @media (max-width: 860px) {

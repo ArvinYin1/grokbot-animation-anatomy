@@ -4,7 +4,9 @@
 
 An interactive explainer page (in Chinese) dissecting how the **Grok Bot** macOS app's avatar animation engine works — and why its procedural-SVG approach beats Lottie, video/GIF, WebGL shaders and CSS animation for a living, interactive character.
 
-The page practices what it preaches: **0 third-party runtime dependencies, 0 build step** — plain HTML + CSS + native ES modules, every demo computed live. The showcase bots (hero, blink and state-machine sections) run `js/vendor/grok-player.js`, a faithful line-level port of the original engine, driven by `js/vendor/grok-recipes.json` (animation data extracted from the local app).
+The page practices what it preaches: **0 third-party runtime dependencies, 0 build step** — plain HTML + CSS + native ES modules, every demo computed live. The showcase bots (hero, blink, state-machine and gallery sections) run `js/vendor/grok-player.js`, a faithful line-level port of the original engine, driven by `js/vendor/grok-recipes.json` (animation data extracted from the local app).
+
+There's also an **[animation editor](editor.html)** (`/editor.html`): a clip/state editor built on the same engine — visual keyframe tracks (position / rotation / squash / scale / lids / expression), easing and state config (face / morph / next / holdSeconds), live preview in the real engine, and JSON export in the engine's native format.
 
 ## Live demo / Run
 

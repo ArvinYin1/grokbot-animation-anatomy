@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>动画编辑器 —— Grok Bot 头像解剖</title>
+<meta name="description" content="基于 Grok Bot 头像引擎（grok-player 移植）的 clip / 状态动画编辑器：改 JSON 关键帧，真引擎实时预览。">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<nav class="topnav">
+  <span class="brand">Grok Bot 头像解剖 · 动画编辑器</span>
+  <span class="nav-links"><a href="index.html">← 返回解剖页</a></span>
+</nav>
+
+<main class="editor">
+
+  <!-- 左：预览 + 状态配置 -->
+  <div class="ed-left">
+    <div class="paper demo ed-preview-card">
+      <div class="ed-stage" id="ed-stage"></div>
+      <div class="controls">
+        <button id="ed-replay">重新播放</button>
+        <label><input type="checkbox" id="ed-follow"> 视线跟随鼠标</label>
+      </div>
+      <p class="hint">预览跑的就是原版引擎移植（grok-player）：你编辑的 clip 被注入一份
+        临时状态 <code>_editor</code>，循环播放。每次修改约 0.4s 后自动重载。</p>
+    </div>
+
+    <div class="paper demo">
+      <h3 class="ed-h">状态配置（state）</h3>
+      <div class="ed-form">
+        <label>表情 face
+          <select id="st-face"></select>
+        </label>
+        <label>morph 装饰
+          <select id="st-morph"></select>
+        </label>
+        <label>播完自动转移 next
+          <select id="st-next"></select>
+        </label>
+        <label>停留秒数 holdSeconds
+          <input type="number" id="st-hold" min="0" step="0.1" placeholder="（空 = 立即）">
+        </label>
+      </div>
+      <p class="hint">状态 = clip 池 × 表情 × 装饰 × 转移。这里只有一个 clip，
+        但导出后可以把多个 clip 填进 <code>clips</code> 数组。</p>
+    </div>
+  </div>
+
+  <!-- 右：clip 编辑 -->
+  <div class="ed-right">
+    <div class="paper demo">
+      <h3 class="ed-h">Clip</h3>
+      <div class="ed-form">
+        <label>从现有 clip 开始
+          <select id="cl-template"></select>
+        </label>
+        <label>名称
+          <input type="text" id="cl-name" value="MyClip_A">
+        </label>
+        <label>时长（秒）
+          <input type="number" id="cl-duration" min="0.2" step="0.1" value="4">
+        </label>
+        <label>squashAnchor
+          <input type="number" id="cl-anchor" min="0" max="1" step="0.05" value="0">
+        </label>
+        <label>rest 帧时刻 workArea.start
+          <input type="number" id="cl-rest" min="0" step="0.1" placeholder="（空 = 0）">
+        </label>
+        <label class="ed-check"><input type="checkbox" id="cl-follow" checked> 允许视线跟随（inspect.follow）</label>
+      </div>
+      <div id="ed-tracks"></div>
+    </div>
+
+    <div class="paper demo">
+      <h3 class="ed-h">导出 / 导入</h3>
+      <textarea id="ed-json" class="ed-json" spellcheck="false"></textarea>
+      <div class="controls">
+        <button id="ed-copy">复制 JSON</button>
+        <button id="ed-dl-clip">下载 clip</button>
+        <button id="ed-dl-state">下载 state</button>
+        <button id="ed-import">从文本框载入</button>
+      </div>
+      <p class="hint">导出的 clip JSON 与原引擎数据同构：放进 grok-recipes.json 的
+        <code>clips</code> 数组、把名字加进某个状态的 <code>clips</code> 池即可被引擎播放。
+        「从文本框载入」接受 <code>{clip, state}</code> 或单个 clip 对象。</p>
+    </div>
+  </div>
+
+</main>
+
+<script type="module" src="js/editor.js"></script>
+</body>
+</html>
