@@ -6,6 +6,7 @@ import { init as initSpring } from './sections/spring.js';
 import { init as initSphere } from './sections/sphere.js';
 import { init as initBlink } from './sections/blink.js';
 import { init as initStates } from './sections/states.js';
+import { init as initGallery } from './sections/gallery.js';
 import { init as initCompare } from './sections/compare.js';
 
 // Hero：原版引擎移植（grok-player）+ 原版提取的动画数据，视线跟随鼠标
@@ -18,6 +19,7 @@ initSpring(document.querySelector('#sec-spring'));
 initSphere(document.querySelector('#sec-sphere'));
 initBlink(document.querySelector('#sec-blink'));
 initStates(document.querySelector('#sec-states'));
+initGallery(document.querySelector('#sec-gallery'));
 initCompare(document.querySelector('#sec-compare'));
 
 // 滚动进场（reduced-motion 时直接全部可见）

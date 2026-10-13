@@ -25,6 +25,7 @@ python3 -m http.server 8000
 - **Pseudo-3D: the eyes live on a sphere** — Rodrigues rotation + orthographic projection, flat-vs-sphere comparison
 - **Blinks & liveliness** — blinks are clip-embedded keyframe events (0.26 s, closed at 45%) + imperative `blink()`; no ambient scheduler exists in the original bundle
 - **State machine & recipe shuffle** — 53 states, seeded-PRNG clip shuffle with random phase; showcase runs the ported original engine
+- **State gallery** — all 53 states running live engine instances on one page, filterable by the five lifecycle groups, click to poke
 - **Head-to-head comparison** — procedural SVG vs Lottie vs video/GIF vs WebGL vs CSS, plus a decision wizard
 
 ## Source

@@ -18,6 +18,7 @@
     <a href="#sec-sphere">伪 3D</a>
     <a href="#sec-blink">眨眼</a>
     <a href="#sec-states">状态机</a>
+    <a href="#sec-gallery">陈列馆</a>
     <a href="#sec-compare">对比</a>
   </span>
 </nav>
@@ -265,10 +266,35 @@ x += v·dt</pre>
   </div>
 </section>
 
-<!-- ============ 7. 横向对比 ============ -->
-<section class="section" id="sec-compare">
+<!-- ============ 7. 状态陈列馆 ============ -->
+<section class="section" id="sec-gallery">
   <div class="col-text">
     <p class="sec-no">07</p>
+    <h2>状态陈列馆：53 个状态一次看全</h2>
+    <p>原引擎的状态注册表一共 <strong>53 项</strong>，按用途分五组。下面每一张卡都是
+      <strong>正在运行的原版引擎实例</strong>（grok-player + 提取数据），不是截图、不是录屏。</p>
+    <p>注意一个事实：53 个状态，底层只有 <strong>28 条 clip</strong>。状态不是 53 段手绘动画，
+      而是 <strong>clip 池 × 表情（face）× morph 装饰</strong> 的组合——reading / working /
+      coding / running / computing / controlling 六个状态共用同一组 Working clip，
+      表现力全靠组合撑开。</p>
+    <p>点任意卡片可以戳它一下（poke）。带 <code>next</code> 的状态会真的自动转移：
+      waking 播 1.6 秒自己变回 idle；blocked 则要撑满 120 秒才进入 drowsy——
+      这张卡你等不到，但机制就在数据里。</p>
+  </div>
+  <div class="col-demo wide">
+    <div class="paper demo">
+      <div class="gallery-tabs"></div>
+      <div class="gallery-grid"></div>
+      <p class="hint">53 个引擎实例同页运行；离屏与被过滤的卡片由引擎内置
+        IntersectionObserver 自动休眠，不耗 CPU。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 8. 横向对比 ============ -->
+<section class="section" id="sec-compare">
+  <div class="col-text">
+    <p class="sec-no">08</p>
     <h2>横向对比：为什么选程序化 SVG</h2>
     <p>Grok Bot 的头像需要：随时响应视线的眼睛、53 个状态、任意尺寸渲染、离线可用。
       在这四个约束下，素材型方案全部出局——剩下的就是代码。</p>
@@ -315,10 +341,10 @@ x += v·dt</pre>
   </div>
 </section>
 
-<!-- ============ 8. 结尾 ============ -->
+<!-- ============ 9. 结尾 ============ -->
 <section class="section" id="sec-end">
   <div class="col-text">
-    <p class="sec-no">08</p>
+    <p class="sec-no">09</p>
     <h2>看不见的工程细节</h2>
     <p>动画引擎（以及本页的移植封装）的高级感，一半来自这些没人注意的角落：</p>
     <ul class="checklist">
