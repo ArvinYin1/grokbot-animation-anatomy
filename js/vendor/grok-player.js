@@ -1884,6 +1884,11 @@ export function createGrokBot(container, opts = {}) {
     setResting: whenReady(v => { nx.setResting(v); after(); }),
     setEmphasis: whenReady(v => { nx.setEmphasis(v); after(); }),
     setGlow: whenReady(g => { rt.setGlow(g); after(); }),
+    // 教学用调试快照：当前状态 / clip / 播放头 / morph 弹簧实测值（解析页曲线可视化用）
+    debugFrame() {
+      if (!ready || !rt || !nx) return null;
+      return { state: nx.state, clip: nx.clip, time: rt.time, duration: rt.duration, morph: rt.frame().morph };
+    },
     // 逐帧步进（仅 frozenAt 确定性模式）：推进 n 帧（1/60s）并重渲染一帧
     step(n = 1) {
       if (!ready || destroyed || frozenAt == null) return;

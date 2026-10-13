@@ -221,6 +221,72 @@ pre.code {
 }
 .blink-mark.double { background: #ff8a3d; }
 
+/* ---------- 第 3 节：clip 贝塞尔 ---------- */
+.bez-canvas {
+  width: 100%; display: block; touch-action: none;
+  background: #fff; border: 1px solid #e4e4ea; border-radius: 12px;
+}
+.bez-canvas .grid { stroke: #d8d8e2; stroke-width: 1; }
+.bez-canvas .grid.out { stroke-dasharray: 4 4; }
+.bez-canvas text { font-family: var(--mono); font-size: 10px; fill: #999; }
+.bez-canvas .zone-label { fill: #b8b8c6; }
+.bez-curve { fill: none; stroke: var(--accent); stroke-width: 2.5; }
+.bez-canvas .handle-line { stroke: #b9c6ff; stroke-width: 1.2; }
+.bez-canvas .handle { fill: #fff; stroke: var(--accent); stroke-width: 2; cursor: grab; }
+.bez-canvas .handle:active { cursor: grabbing; }
+.bez-canvas .anchor { fill: var(--ink); }
+.bez-canvas .sweep-dot { fill: var(--ink); }
+.bez-canvas .sweep-guide { stroke: #d0d0da; stroke-width: 1; stroke-dasharray: 3 3; }
+.bez-readout { color: #555; font-size: 12px; }
+
+.clip-live { margin-top: 18px; }
+.clip-live-head { display: flex; gap: 16px; align-items: center; }
+.clip-live .clip-stage { width: 110px; flex-shrink: 0; }
+.clip-live-side { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.clip-live-name { color: #333; font-size: 12.5px; margin: 0; }
+.clip-curve {
+  width: 100%; display: block; margin-top: 10px;
+  background: #fff; border: 1px solid #e4e4ea; border-radius: 12px;
+}
+.clip-curve .clip-track-curve { fill: none; stroke: var(--accent); stroke-width: 2; }
+.clip-curve .kf-diamond { fill: var(--ink); cursor: help; }
+.clip-curve .clip-playhead { stroke: var(--ink); stroke-width: 1.5; }
+.clip-curve .clip-playdot { fill: var(--ink); }
+.clip-curve text { font-family: var(--mono); font-size: 10px; fill: #999; }
+.clip-curve .empty-label { fill: #aaa; font-size: 12px; }
+
+/* ---------- 第 5 节：弹簧分工 ---------- */
+.spr-graphs { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+.spr-row { }
+.spr-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 3px; }
+.spr-label { font-size: 12.5px; color: #333; }
+.spr-label::before {
+  content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 3px;
+  background: var(--lane); margin-right: 7px;
+}
+.spr-val { color: #555; font-size: 12px; }
+.spr-graph {
+  width: 100%; display: block;
+  background: #fff; border: 1px solid #e4e4ea; border-radius: 10px;
+}
+.spr-graph .spr-axis { stroke: #e2e2ea; stroke-width: 1; }
+.spr-graph .spr-target { stroke: #c0c0ce; stroke-width: 1; stroke-dasharray: 5 4; }
+.spr-graph .spr-line { fill: none; stroke-width: 2; }
+.spr-graph .spr-mark { stroke: #ff8a3d; stroke-width: 1.2; }
+.spr-graph .spr-mark-label { font-family: var(--mono); font-size: 9.5px; fill: #ff8a3d; }
+
+/* ---------- 第 8 节：切换解剖时间线 ---------- */
+.switch-lab { margin-top: 18px; }
+.switch-title { color: #333; font-size: 13px; margin-bottom: 8px; }
+.switch-tl {
+  width: 100%; display: block;
+  background: #fff; border: 1px solid #e4e4ea; border-radius: 12px;
+}
+.switch-tl .sw-label { font-family: var(--mono); font-size: 11px; fill: #333; }
+.switch-tl .sw-note { font-family: var(--mono); font-size: 9.5px; fill: #999; }
+.switch-tl .sw-track { fill: #f0f0f5; }
+.switch-tl .sw-tick { stroke: #e2e2ea; stroke-width: 1; }
+
 /* grok-player 渲染的 svg（width/height 由内联属性给定） */
 .hero-stage svg, .demo .stage svg { max-width: 100%; height: auto; }
 

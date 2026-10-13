@@ -2,7 +2,9 @@
 import { createGrokBot } from './vendor/grok-player.js';
 import { init as initSvg } from './sections/svg-pipeline.js';
 import { init as initMorph } from './sections/morph.js';
+import { init as initClip } from './sections/clip.js';
 import { init as initSpring } from './sections/spring.js';
+import { init as initSprings } from './sections/springs.js';
 import { init as initSphere } from './sections/sphere.js';
 import { init as initBlink } from './sections/blink.js';
 import { init as initStates } from './sections/states.js';
@@ -15,7 +17,9 @@ createGrokBot(document.querySelector('.hero-stage'), { size: 300, state: 'idle',
 // 各版块
 initSvg(document.querySelector('#sec-svg'));
 initMorph(document.querySelector('#sec-morph'));
+initClip(document.querySelector('#sec-clip'));
 initSpring(document.querySelector('#sec-spring'));
+initSprings(document.querySelector('#sec-springs'));
 initSphere(document.querySelector('#sec-sphere'));
 initBlink(document.querySelector('#sec-blink'));
 initStates(document.querySelector('#sec-states'));
