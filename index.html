@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GrokBotMark 解剖 —— 一个不用任何动画库的角色动画引擎</title>
+<title>Grok Bot 头像解剖 —— 一个不用任何动画库的角色动画引擎</title>
 <meta name="description" content="基于对 macOS 应用 Grok Bot（Electron）app.asar 解包的逆向分析：程序化 SVG bot 头像动画引擎的实现原理。">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
 <nav class="topnav">
-  <span class="brand">GrokBotMark 解剖</span>
+  <span class="brand">Grok Bot 头像解剖</span>
   <span class="nav-links">
     <a href="#sec-svg">SVG</a>
     <a href="#sec-morph">Morph</a>
@@ -28,7 +28,7 @@
     <div class="hero-text">
       <p class="kicker">基于对 Grok Bot（Electron, macOS）app.asar 解包的逆向分析</p>
       <h1>一个不用任何<br>动画库的角色<br>动画引擎</h1>
-      <p class="lede">Grok Bot 的头像引擎 GrokBotMark：没有 Lottie json，没有 gif/webm/mp4，
+      <p class="lede">Grok Bot 的头像引擎：没有 Lottie json，没有 gif/webm/mp4，
         没有 glsl/wgsl，没有一张图片——全部图形在运行时用代码算出来。
         这个页面上你看到的每一个 demo，都是它讲的那项技术本身。</p>
       <div class="badges">
@@ -51,7 +51,7 @@
   <div class="col-text">
     <p class="sec-no">01</p>
     <h2>每帧都是算出来的</h2>
-    <p>GrokBotMark 在 JS 里维护一棵<strong>虚拟 SVG 节点树</strong>，每帧重新计算所有图形参数，
+    <p>这套引擎在 JS 里维护一棵<strong>虚拟 SVG 节点树</strong>，每帧重新计算所有图形参数，
       再由一个 <strong>DOM diff 写入器</strong>把变化落到真实 DOM：结构不变时只写
       <code>attribute</code>，结构变了才 <code>createElementNS</code> 重建。</p>
     <p>身体是 <code>&lt;path fill&gt;</code>；眼睛不是盖在身体上的白色形状，而是从身体上<strong>挖出来的洞</strong>——所以身体下面是
@@ -89,7 +89,7 @@
   <div class="col-text">
     <p class="sec-no">02</p>
     <h2>形状 morph：径向轮廓插值</h2>
-    <p>怎么把圆形「变成」爱心？GrokBotMark 的做法是<strong>向 192 个基准角度方向发射线</strong>
+    <p>怎么把圆形「变成」爱心？它的做法是<strong>向 192 个基准角度方向发射线</strong>
       （再叠加轮廓顶点处的角度），求每条射线与形状轮廓的交点，得到一个半径数组 <code>r(θ)</code>。
       morph 就是对两个形状的 <code>r(θ)</code> <strong>逐角度线性插值</strong>，
       插值权重由弹簧驱动——所以形变本身也带物理感。</p>
@@ -200,7 +200,7 @@ x += v·dt</pre>
         <path class="eye eye-r" d=""></path>
       </svg>
       <div class="controls">
-        <label><input type="checkbox" data-sphere-mode checked> <span class="sphere-mode-label">球面投影（GrokBotMark 方案）</span></label>
+        <label><input type="checkbox" data-sphere-mode checked> <span class="sphere-mode-label">球面投影（Grok Bot 方案）</span></label>
       </div>
       <p class="width-ratio mono">转动头部，观察两只眼睛宽度比变化</p>
     </div>
@@ -277,7 +277,7 @@ x += v·dt</pre>
     <div class="paper demo">
       <table class="cmp-table">
         <thead>
-          <tr><th></th><th>程序化 SVG<br><small>GrokBotMark</small></th><th>Lottie</th><th>视频 / GIF</th><th>WebGL shader</th><th>CSS 动画</th></tr>
+          <tr><th></th><th>程序化 SVG<br><small>Grok Bot</small></th><th>Lottie</th><th>视频 / GIF</th><th>WebGL shader</th><th>CSS 动画</th></tr>
         </thead>
         <tbody>
           <tr><th>素材体积</th><td class="good">0 字节（代码即素材）</td><td class="mid">json 几十~几百 KB</td><td class="bad">数百 KB~MB 级</td><td class="mid">shader 小但需运行环境</td><td class="good">0 字节</td></tr>
@@ -320,7 +320,7 @@ x += v·dt</pre>
   <div class="col-text">
     <p class="sec-no">08</p>
     <h2>看不见的工程细节</h2>
-    <p>动画引擎的高级感，一半来自这些没人注意的角落：</p>
+    <p>动画引擎（以及本页的移植封装）的高级感，一半来自这些没人注意的角落：</p>
     <ul class="checklist">
       <li><code>requestAnimationFrame</code> 驱动，60fps 上限节流</li>
       <li><code>document.hidden</code> 时暂停整个循环</li>
@@ -343,7 +343,7 @@ x += v·dt</pre>
 </main>
 
 <footer class="footer">
-  <p>GrokBotMark 解剖 · 逆向工程笔记 · 本页所有动画均为程序化生成</p>
+  <p>Grok Bot 头像解剖 · 逆向工程笔记 · 本页所有动画均为程序化生成</p>
 </footer>
 
 <script type="module" src="js/main.js"></script>

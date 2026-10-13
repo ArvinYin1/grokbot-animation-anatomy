@@ -32,7 +32,7 @@ export function init(root) {
   // answers[1]: 能接受动辄几百 KB～MB 级素材 + 不可逐帧程序化修改？
   // answers[2]: 目标环境能保证 GPU / 现代浏览器能力？
   function verdict([interactive, heavyOk, gpuOk]) {
-    if (interactive && heavyOk) return '视频/GIF 或 Lottie 都不支持真正的实时交互——推荐程序化 SVG（GrokBotMark 方案）：0 素材、分辨率无关、状态机/视线跟随全由代码驱动。';
+    if (interactive && heavyOk) return '视频/GIF 或 Lottie 都不支持真正的实时交互——推荐程序化 SVG（Grok Bot 方案）：0 素材、分辨率无关、状态机/视线跟随全由代码驱动。';
     if (interactive) return '推荐程序化 SVG：交互 = 每帧重算，代码即素材；Lottie/视频在此维度上是死的。';
     if (!heavyOk && gpuOk) return '纯展示型华丽动效可选 Lottie（设计稿直出）或 WebGL shader（视觉上限最高）——但代价是素材体积与工具链。';
     if (gpuOk) return '无交互、重视觉：WebGL shader 或视频/GIF 都行；注意视频是像素素材，缩放即糊。';

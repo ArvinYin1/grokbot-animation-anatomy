@@ -52,7 +52,7 @@ export function init(root) {
   svg.addEventListener('pointerup', () => { dragging = false; });
 
   modeToggle.addEventListener('change', () => {
-    modeLabel.textContent = modeToggle.checked ? '球面投影（GrokBotMark 方案）' : '平面贴眼（常见省事方案）';
+    modeLabel.textContent = modeToggle.checked ? '球面投影（Grok Bot 方案）' : '平面贴眼（常见省事方案）';
   });
 
   function draw(t) {
