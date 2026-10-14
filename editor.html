@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>动画编辑器 —— Grok Bot 头像解剖</title>
 <meta name="description" content="基于 Grok Bot 头像引擎（grok-player 移植）的 clip / 状态动画编辑器：时间轴关键帧编辑，真引擎实时预览。">
-<link rel="stylesheet" href="styles.css?v=5">
+<link rel="stylesheet" href="styles.css?v=7">
 </head>
 <body>
 
@@ -24,6 +24,11 @@
         <button id="ed-playpause" title="空格">⏸ 暂停</button>
         <span class="mono" id="ed-time">t = 0.00s</span>
         <label><input type="checkbox" id="ed-follow"> 视线跟随</label>
+        <span class="ed-zoom">
+          <button id="ed-zoom-out" title="时间轴缩放（⌘+滚轮）">−</button>
+          <span class="mono" id="ed-zoom-pct">100%</span>
+          <button id="ed-zoom-in" title="时间轴缩放（⌘+滚轮）">+</button>
+        </span>
       </div>
       <p class="hint">预览跑的是原版引擎移植（grok-player），播放头与 clip 时间轴严格对齐
         （firstPhase = 0）。拖下方时间轴的播放头可以逐帧 scrub（引擎 frozenAt 确定性模式）。</p>
@@ -43,8 +48,8 @@
     </div>
     <p class="hint">单击空白取消选择；<b>双击</b>轨道空白添加关键帧；空白处拖动 = 框选；
       Shift+点菱形加选/减选；拖菱形改时刻（吸附 0.05s 网格与其他关键帧，⌘ 临时关闭，
-      多选整体平移）；←/→ 微调（Shift 加速）；⌘C/⌘V 复制粘贴；Delete 删除；Esc 取消选择；
-      ⌘Z 撤销、⌘⇧Z 重做。</p>
+      多选整体平移）；⌘+滚轮缩放时间轴；←/→ 微调（Shift 加速）；⌘C/⌘V 复制粘贴；
+      Delete 删除；Esc 取消选择；⌘Z 撤销、⌘⇧Z 重做。</p>
   </div>
 
   <!-- 导出 / 导入 -->
@@ -64,6 +69,8 @@
 
 </main>
 
-<script type="module" src="js/editor.js?v=5"></script>
+<div id="ed-toast"></div>
+
+<script type="module" src="js/editor.js?v=7"></script>
 </body>
 </html>

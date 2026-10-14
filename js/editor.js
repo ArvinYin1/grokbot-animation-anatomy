@@ -25,7 +25,8 @@ const EASE_PRESETS = [
   ['回弹', [0.34, 1.56, 0.64, 1]],
 ];
 
-const PPS = 140;      // 时间轴：像素/秒
+let PPS = 140;        // 时间轴：像素/秒（⌘+滚轮 / 走带 ± 按钮缩放）
+const PPS_MIN = 35, PPS_MAX = 560;
 const LABEL_W = 150;  // 轨道名称列宽
 
 let recipes = null;
@@ -38,6 +39,7 @@ let scrubT = 0;
 let liveBot = null, frozenBot = null;
 let previewTimer = 0;
 let playT0 = 0;                        // play 模式循环相位基准（performance.now()）
+let paused = false, pausePhase = 0;    // play 模式下的真暂停（冻结在当前相位）
 
 const blankClip = () => ({
   name: 'MyClip_A', duration: 4, body: 'sphere', squashAnchor: 0,
@@ -50,6 +52,31 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (c) =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const fmt = (v) => String(+Number(v).toFixed(3)); // 显示 2-3 位小数；提交时 parseFloat 保留全精度
 const clampT = (t) => Math.min(clip.duration, Math.max(0, t));
+
+// ---------- 轻量 toast（2s 淡出；带按钮时不自动消失） ----------
+let toastTimer = 0;
+function toast(msg, actions) {
+  const el = $('#ed-toast');
+  el.innerHTML = `<span>${esc(msg)}</span>` + (actions ?? []).map((a, i) =>
+    `<button data-toast="${i}">${esc(a.label)}</button>`).join('');
+  el.querySelectorAll('[data-toast]').forEach((b) =>
+    b.addEventListener('click', () => { el.classList.remove('show'); actions[+b.dataset.toast].fn(); }));
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  if (!actions) toastTimer = setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+// ---------- 时间轴缩放 ----------
+function setPPS(v, anchorT, anchorPx) { // anchorT/anchorPx：缩放锚点（时刻 + 视口内 x），保持其不动
+  PPS = Math.min(PPS_MAX, Math.max(PPS_MIN, v));
+  try { localStorage.setItem('grok-editor-pps', String(PPS)); } catch { /* 写入失败：静默 */ }
+  $('#ed-zoom-pct').textContent = `${Math.round(PPS / 140 * 100)}%`;
+  renderTimeline();
+  if (anchorT != null) {
+    const tl = $('#ed-tl');
+    tl.scrollLeft = anchorT * PPS + LABEL_W - anchorPx;
+  }
+}
 
 // ---------- 选择集 ----------
 const kfKey = (track, i) => `${track}:${i}`;
@@ -122,6 +149,34 @@ function redo() {
   applySnap(redoStack.pop());
 }
 
+// ---------- 编辑状态自动保存（localStorage，debounce 1s） ----------
+const LS_KEY = 'grok-editor-draft';
+let saveTimer = 0;
+function scheduleSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try {
+      localStorage.setItem(LS_KEY, JSON.stringify({ clip, st, sel: [...selKeys], anchor: sel, ts: Date.now() }));
+    } catch { /* 隐私模式等写入失败：静默 */ }
+  }, 1000);
+}
+// 启动时检测与当前 clip 同名但内容不同的草稿 → toast 提供恢复/丢弃
+function checkDraft() {
+  let d;
+  try { d = JSON.parse(localStorage.getItem(LS_KEY)); } catch { return; }
+  if (!d?.clip || d.clip.name !== clip.name) return;
+  if (JSON.stringify(d.clip) === JSON.stringify(clip)) return;
+  toast(`检测到上次未保存的编辑（${new Date(d.ts).toLocaleTimeString()}）`, [
+    { label: '恢复', fn: () => {
+      pushUndo();
+      clip = d.clip; st = d.st ?? st;
+      selKeys = new Set(d.sel ?? []); sel = d.anchor ?? null;
+      renderTimeline(); renderInspector(); schedulePreview();
+    } },
+    { label: '丢弃', fn: () => { try { localStorage.removeItem(LS_KEY); } catch {} } },
+  ]);
+}
+
 // ---------- 模型 → 导出对象 ----------
 function exportClip() {
   const c = {
@@ -165,14 +220,27 @@ function schedulePreview() {
   updateExport();
   clearTimeout(previewTimer);
   previewTimer = setTimeout(rebuildPreview, 120); // 拖拽中也能跟手（play/scrub 同一防抖）
+  scheduleSave(); // 编辑状态自动保存（debounce 1s）
 }
 // play 模式当前循环时刻（按循环时长推算；引擎 firstPhase=0 与之对齐）
 const loopPhase = () => (clip ? ((performance.now() - playT0) / 1000) % clip.duration : 0);
+// 落点用当前相位：暂停时墙钟仍在走，须取冻结相位
+const curPhase = () => (paused ? pausePhase : loopPhase());
+let resumePhase = null; // resumePlay 设置的待接管相位（rebuildPreview 消费一次，避免被重置为 0）
 function rebuildPreview() {
   if (!recipes || !clip) return;
   updateExport();
   if (mode === 'play') {
-    const phase = liveBot ? loopPhase() : 0; // 重建前相位，尽量不打断循环
+    if (paused) { // 真暂停：冻结在暂停相位（frozenAt 确定性渲染），编辑仍可更新画面
+      liveBot?.destroy(); liveBot = null;
+      frozenBot?.destroy();
+      frozenBot = createGrokBot($('#ed-stage'), {
+        size: 280, state: '_editor', data: buildData(), seed: 'editor', frozenAt: pausePhase,
+      });
+      return;
+    }
+    const phase = liveBot ? loopPhase() : (resumePhase ?? 0); // 重建前相位，尽量不打断循环
+    resumePhase = null;
     frozenBot?.destroy(); frozenBot = null;
     liveBot?.destroy();
     liveBot = createGrokBot($('#ed-stage'), {
@@ -188,8 +256,22 @@ function rebuildPreview() {
     });
   }
 }
+function pausePlay() {
+  if (paused) return;
+  pausePhase = loopPhase(); paused = true;
+  $('#ed-playpause').textContent = '▶ 播放';
+  rebuildPreview();
+}
+function resumePlay() {
+  if (!paused) return;
+  paused = false;
+  resumePhase = pausePhase; // 由 rebuildPreview 接管设置 playT0，从冻结相位继续循环
+  $('#ed-playpause').textContent = '⏸ 暂停';
+  rebuildPreview();
+}
 function setMode(m) {
   if (mode === m) return;
+  paused = false;
   if (m === 'play') playT0 = performance.now() - scrubT * 1000; // 从 scrub 点继续循环
   mode = m;
   $('#ed-playpause').textContent = m === 'play' ? '⏸ 暂停' : '▶ 播放';
@@ -200,10 +282,12 @@ function setMode(m) {
 function updateTimeLabel() {
   if (mode !== 'play') $('#ed-time').textContent = `t = ${scrubT.toFixed(2)}s / ${clip.duration}s`;
 }
-// play 模式时刻读数：rAF 实时刷新循环时刻
+// play 模式时刻读数：rAF 实时刷新循环时刻（暂停时显示冻结相位）
 (function tick() {
   if (mode === 'play' && clip)
-    $('#ed-time').textContent = `t = ${loopPhase().toFixed(2)}s / ${clip.duration}s（循环）`;
+    $('#ed-time').textContent = paused ?
+      `t = ${pausePhase.toFixed(2)}s / ${clip.duration}s（已暂停）` :
+      `t = ${loopPhase().toFixed(2)}s / ${clip.duration}s（循环）`;
   requestAnimationFrame(tick);
 })();
 
@@ -284,10 +368,20 @@ function snapT(t, exclude) {
 function renderInspector() {
   const el = $('#ed-inspector');
   if (selKeys.size > 1) {
+    // 批量缓动：回显第一个数值轨道选中帧的 ease
+    const firstKf = selRefs().find(({ track }) => trackDef(track))?.kf;
+    const ease = firstKf?.ease ?? EASE_PRESETS[0][1];
+    const presetIdx = EASE_PRESETS.findIndex(([, p]) => p.every((v, j) => Math.abs(v - ease[j]) < 1e-6));
     el.innerHTML = `
       <h3 class="ed-h">已选 ${selKeys.size} 个关键帧</h3>
       <p class="hint">拖动任一选中菱形可整体平移（保持相对间隔）；←/→ 整体微调；
         ⌘C 复制、⌘V 粘贴到播放头；Esc 取消选择。</p>
+      <h3 class="ed-h">批量缓动（应用到全部选中）</h3>
+      <select data-msel="epreset"><option value="" ${presetIdx < 0 ? 'selected' : ''}>自定义</option>
+        ${EASE_PRESETS.map(([n, p], k) => `<option value="${k}" ${k === presetIdx ? 'selected' : ''}>${n} [${p}]</option>`).join('')}
+      </select>
+      <div class="ed-ease-nums">${ease.map((v, j) =>
+        `<input type="number" data-msel="e${j}" step="0.01" value="${fmt(v)}">`).join('')}</div>
       <div class="controls"><button data-kf="delete">删除这 ${selKeys.size} 个关键帧</button></div>`;
     return;
   }
@@ -418,6 +512,16 @@ function drawBezier(ease) {
 function bindTimeline() {
   const tl = $('#ed-tl');
 
+  // Cmd/Ctrl+滚轮：以鼠标位置为锚缩放时间轴（preventDefault 避免触发浏览器页面缩放）
+  tl.addEventListener('wheel', (e) => {
+    if (!(e.metaKey || e.ctrlKey)) return;
+    e.preventDefault();
+    const r = tl.getBoundingClientRect();
+    const px = e.clientX - r.left; // 视口内 x
+    const t = Math.max(0, (px + tl.scrollLeft - LABEL_W) / PPS);
+    setPPS(PPS * Math.exp(-e.deltaY * 0.002), t, px);
+  }, { passive: false });
+
   // 标尺拖动 = scrub
   $('#ed-ruler').addEventListener('pointerdown', (e) => {
     setMode('scrub');
@@ -503,11 +607,14 @@ function bindTimeline() {
   });
 
   // 框选：轨道空白按下拖动超过 4px 判定为框选（与单击取消选择、双击添加共存）
+  // 命中判定在时间轴内容坐标系进行、move 期间实时更新——窗口 autoscroll 不改变内容坐标，松手必中
   let suppressClick = false;
   tl.addEventListener('pointerdown', (e) => {
     if (e.button !== 0) return;
     if (e.target.closest('.ed2-kf') || e.target.closest('.ed2-add') || e.target.closest('#ed-ruler')) return;
     const startX = e.clientX, startY = e.clientY;
+    const r0 = tl.getBoundingClientRect();
+    const acx = startX - r0.left + tl.scrollLeft, acy = startY - r0.top + tl.scrollTop; // 锚点内容坐标
     let box = null, active = false;
     const move = (ev) => {
       if (!active && Math.hypot(ev.clientX - startX, ev.clientY - startY) < 4) return;
@@ -518,33 +625,34 @@ function bindTimeline() {
         tl.appendChild(box);
       }
       const r = tl.getBoundingClientRect();
-      const x = (v) => v - r.left + tl.scrollLeft, y = (v) => v - r.top + tl.scrollTop;
-      box.style.left = `${Math.min(x(startX), x(ev.clientX))}px`;
-      box.style.top = `${Math.min(y(startY), y(ev.clientY))}px`;
-      box.style.width = `${Math.abs(ev.clientX - startX)}px`;
-      box.style.height = `${Math.abs(ev.clientY - startY)}px`;
-    };
-    const up = (ev) => {
-      window.removeEventListener('pointermove', move);
-      window.removeEventListener('pointerup', up);
-      box?.remove();
-      if (!active) return;
-      suppressClick = true; // 阻止紧随的 click 把刚框选的选择清掉
-      const mx0 = Math.min(startX, ev.clientX), mx1 = Math.max(startX, ev.clientX);
-      const my0 = Math.min(startY, ev.clientY), my1 = Math.max(startY, ev.clientY);
+      const cx = ev.clientX - r.left + tl.scrollLeft, cy = ev.clientY - r.top + tl.scrollTop;
+      box.style.left = `${Math.min(acx, cx)}px`;
+      box.style.top = `${Math.min(acy, cy)}px`;
+      box.style.width = `${Math.abs(cx - acx)}px`;
+      box.style.height = `${Math.abs(cy - acy)}px`;
+      const mx0 = Math.min(acx, cx), mx1 = Math.max(acx, cx);
+      const my0 = Math.min(acy, cy), my1 = Math.max(acy, cy);
       const list = [];
       tl.querySelectorAll('[data-lane]').forEach((laneEl) => {
-        const r = laneEl.getBoundingClientRect();
-        if (r.bottom < my0 || r.top > my1) return;
+        const lr = laneEl.getBoundingClientRect();
+        const ly0 = lr.top - r.top + tl.scrollTop, lx0 = lr.left - r.left + tl.scrollLeft;
+        if (ly0 + lr.height < my0 || ly0 > my1) return;
         const track = laneEl.dataset.lane;
         sortedKfs(track).forEach((kf, i) => {
-          const kx = r.left + kf.t * PPS;
+          const kx = lx0 + kf.t * PPS;
           if (kx >= mx0 && kx <= mx1) list.push({ track, i });
         });
       });
       selKeys = new Set(list.map(({ track, i }) => kfKey(track, i)));
       sel = list.length ? list[list.length - 1] : null;
       renderTimeline(); renderInspector();
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      box?.remove();
+      if (!active) return;
+      suppressClick = true; // 阻止紧随的 click 把刚框选的选择清掉
     };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
@@ -572,7 +680,7 @@ function bindTimeline() {
     const add = e.target.closest('.ed2-add');
     if (!add) return;
     pushUndo();
-    if (mode !== 'scrub') { scrubT = clampT(+loopPhase().toFixed(3)); setMode('scrub'); }
+    if (mode !== 'scrub') { scrubT = clampT(+curPhase().toFixed(3)); setMode('scrub'); }
     addKfAt(add.dataset.add, scrubT);
   });
 
@@ -613,7 +721,25 @@ function bindTimeline() {
 function bindInspector() {
   const el = $('#ed-inspector');
   const onEdit = (e) => {
-    const ins = e.target.dataset.ins, kfF = e.target.dataset.kf;
+    const ins = e.target.dataset.ins, kfF = e.target.dataset.kf, msel = e.target.dataset.msel;
+    if (msel) { // 多选批量缓动：应用到全部选中的数值轨道关键帧
+      if (!selKeys.size) return;
+      if (msel === 'epreset') {
+        if (e.target.value === '') return;
+        pushUndo();
+        const p = EASE_PRESETS[+e.target.value][1];
+        for (const { track, kf } of selRefs()) if (trackDef(track)) kf.ease = [...p];
+      } else if (/^e\d$/.test(msel)) {
+        pushUndoCo(`msel:${msel}`);
+        const j = +msel.slice(1);
+        for (const { track, kf } of selRefs()) {
+          if (!trackDef(track)) continue;
+          kf.ease ??= [...EASE_PRESETS[0][1]];
+          kf.ease[j] = parseFloat(e.target.value) || 0;
+        }
+      }
+      renderInspector(); schedulePreview(); return;
+    }
     if (ins) {
       if (ins === 'template') {
         const src = recipes.clips.find((c) => c.name === e.target.value);
@@ -636,6 +762,7 @@ function bindInspector() {
           for (const k of Object.keys(clip.tracks))
             clip.tracks[k] = clip.tracks[k].slice().sort((a, b) => a.t - b.t);
           restoreSel(refs);
+          toast(`${clamped} 个关键帧被钳到末尾`);
         }
         renderTimeline();
       }
@@ -686,13 +813,26 @@ function bindInspector() {
 
 // ---------- 导出 / 导入 / 走带 ----------
 function bindStatic() {
-  $('#ed-playpause').addEventListener('click', () => setMode(mode === 'play' ? 'scrub' : 'play'));
+  // 播放/暂停：play 模式下真暂停（冻结当前相位）；scrub 模式下 = 进入 play
+  $('#ed-playpause').addEventListener('click', () => {
+    if (mode === 'play') { paused ? resumePlay() : pausePlay(); } else setMode('play');
+  });
   $('#ed-follow').addEventListener('change', rebuildPreview);
   window.addEventListener('keydown', (e) => {
     if (e.code === 'Space' && !e.target.closest('input, textarea, select')) {
-      e.preventDefault(); setMode(mode === 'play' ? 'scrub' : 'play');
+      e.preventDefault();
+      if (mode === 'play') { paused ? resumePlay() : pausePlay(); } else setMode('play');
     }
   });
+  // 走带 ±：以时间轴视口中心为锚缩放
+  const zoomBy = (f) => {
+    const tl = $('#ed-tl');
+    const px = tl.clientWidth / 2;
+    const t = Math.max(0, (px + tl.scrollLeft - LABEL_W) / PPS);
+    setPPS(PPS * f, t, px);
+  };
+  $('#ed-zoom-out').addEventListener('click', () => zoomBy(1 / 1.25));
+  $('#ed-zoom-in').addEventListener('click', () => zoomBy(1.25));
   // Cmd/Ctrl+Z 撤销，Cmd/Ctrl+Shift+Z 或 Cmd/Ctrl+Y 重做（输入框聚焦时不劫持）
   window.addEventListener('keydown', (e) => {
     if (!(e.metaKey || e.ctrlKey)) return;
@@ -726,7 +866,7 @@ function bindStatic() {
         if (!items.length) return;
       } catch { return; }
       pushUndo();
-      const target = mode === 'scrub' ? scrubT : clampT(+loopPhase().toFixed(3)); // 与「+」一致：play 模式对齐循环相位
+      const target = mode === 'scrub' ? scrubT : clampT(+curPhase().toFixed(3)); // 与「+」一致：play 模式对齐循环相位
       const tMin = Math.min(...items.map((it) => +it.kf.t));
       const pasted = [];
       for (const { track, kf } of items) {
@@ -801,5 +941,10 @@ fetch('js/vendor/grok-recipes.json')
     if (src) clip = structuredClone(src);
     bindStatic(); bindTimeline(); bindInspector();
     renderTimeline(); renderInspector(); setMode('play');
+    try { // 恢复上次的缩放级别（setPPS 内部 clamp 到 35–560）
+      const savedPps = +localStorage.getItem('grok-editor-pps');
+      if (Number.isFinite(savedPps) && savedPps > 0) setPPS(savedPps);
+    } catch { /* 读取失败：用默认 140 */ }
     updateTimeLabel(); rebuildPreview();
+    checkDraft(); // 检测到未保存的编辑时 toast 提供恢复/丢弃
   });

@@ -356,14 +356,33 @@ pre.code {
 .footer a { color: var(--accent-bright); text-decoration: none; }
 
 /* ---------- 动画编辑器（editor.html） ---------- */
-.editor2 { max-width: 1240px; display: grid; gap: 22px; padding: 48px 28px; }
+.editor2 { max-width: 1440px; display: grid; gap: 22px; padding: 48px 28px; }
 .ed2-top { display: grid; grid-template-columns: 380px 1fr; gap: 22px; align-items: stretch; }
-/* 固定检查器最小高度：选中/取消选中关键帧时面板内容高度变化不会推动下方时间轴 */
-.ed2-inspector { min-height: 580px; }
+/* 固定检查器高度 + 独立滚动：选中/取消选中时时间轴零位移，短内容不留大白块 */
+.ed2-inspector { height: 580px; overflow-y: auto; }
 .ed-stage { width: 280px; margin: 0 auto; }
-.ed-transport { display: flex; gap: 14px; align-items: center; margin-top: 14px; justify-content: center; }
+.ed-transport { display: flex; gap: 10px 14px; align-items: center; margin-top: 14px; justify-content: center; flex-wrap: wrap; }
 #ed-time { white-space: nowrap; flex-shrink: 0; }
 .ed-transport label { white-space: nowrap; flex-shrink: 0; }
+/* 走带 · 时间轴缩放控件 */
+.ed-zoom { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+.ed-zoom button {
+  width: 26px; height: 26px; border: 1px solid #d4d4dd; background: #fff; color: var(--ink);
+  border-radius: 50%; cursor: pointer; font-size: 14px; line-height: 1;
+}
+.ed-zoom span { font-size: 12px; color: #666; min-width: 40px; text-align: center; }
+/* 轻量 toast */
+#ed-toast {
+  position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%) translateY(8px);
+  display: flex; gap: 10px; align-items: center; z-index: 50;
+  background: #1c1c26; color: #fff; font-size: 13px; padding: 9px 16px; border-radius: 999px;
+  opacity: 0; pointer-events: none; transition: opacity 0.25s, transform 0.25s;
+}
+#ed-toast.show { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
+#ed-toast button {
+  border: 1px solid #555; background: none; color: #9ec1ff; border-radius: 999px;
+  padding: 2px 12px; cursor: pointer; font-size: 12.5px;
+}
 .ed-transport button {
   font-family: var(--sans); font-size: 13px; cursor: pointer; min-width: 84px;
   border: 1px solid #d4d4dd; background: #fff; color: var(--ink);
@@ -383,6 +402,8 @@ pre.code {
 .ed-form .ed-check { flex-direction: row; align-items: center; gap: 8px; grid-column: 1 / -1; }
 
 /* 时间轴 */
+/* grid 子项默认 min-width:auto 会阻止内滚：必须显式 min-width:0，#ed-tl 才真正 overflow-x 滚动 */
+.ed2-timeline { min-width: 0; }
 .ed2-tl-scroll { position: relative; overflow-x: auto; padding-bottom: 4px; }
 .ed2-tl-ruler { display: flex; height: 26px; user-select: none; cursor: ew-resize; }
 .ed2-corner { flex-shrink: 0; }
