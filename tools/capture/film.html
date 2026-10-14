@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+body{margin:0;background:#fff}
+#grid{display:grid;gap:0}
+#grid svg{display:block}
+</style></head><body><div id="grid"></div>
+<script type="module">
+// 确定性多帧渲染器：一次步进，把所有帧渲进网格，单张截图后由 PIL 切片。
+// ?schedule=idle:0,thinking:1.5&from=0.1&to=3.05&fps=20&cols=10&cell=340
+import { makeConfig, createRuntime, createStateMachine, buildModel,
+         makeMorphGenerators, makeTrail, createRenderer } from '../../js/vendor/grok-player.js';
+
+const q = new URLSearchParams(location.search);
+const schedule = (q.get('schedule') ?? 'idle:0').split(',')
+  .map((s) => { const [st, at] = s.split(':'); return { st, at: parseFloat(at) }; })
+  .sort((a, b) => a.at - b.at);
+const FROM = parseFloat(q.get('from') ?? '0.1');
+const TO = parseFloat(q.get('to') ?? '3.05');
+const FPS = parseFloat(q.get('fps') ?? '20');
+const COLS = parseInt(q.get('cols') ?? '10', 10);
+const CELL = parseInt(q.get('cell') ?? '340', 10);
+
+const recipes = await fetch('../../js/vendor/grok-recipes.json').then((r) => r.json());
+const G = makeConfig(recipes);
+const gE = makeMorphGenerators(G);
+const trail = makeTrail(G);
+const rt = createRuntime(G, {});
+const nx = createStateMachine(G, rt, schedule[0].st, { seed: 2654435769, firstPhase: 0 });
+const theme = { ink: [0, 0, 0], spot: [0, 0, 0], cutout: true };
+const warn = () => {};
+
+const grid = document.getElementById('grid');
+grid.style.gridTemplateColumns = `repeat(${COLS}, ${CELL}px)`;
+
+const dt = 1 / 60;
+const step = 1 / FPS;
+let si = 1;
+let t = 0;
+for (let ft = FROM; ft < TO - 1e-9; ft += step) {
+  while (t < ft - 1e-9) {
+    while (si < schedule.length && t >= schedule[si].at - 1e-9) nx.setState(schedule[si++].st);
+    nx.advance(dt); rt.advance(dt); t += dt;
+  }
+  const r = createRenderer(document, 'cap', CELL, G);
+  grid.appendChild(r.svg);
+  r.render(buildModel(rt.frame(), theme, CELL, G, gE, trail, warn));
+}
+document.title = 'READY';
+</script></body></html>
