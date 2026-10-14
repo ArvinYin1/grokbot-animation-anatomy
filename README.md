@@ -12,7 +12,7 @@ An interactive explainer dissecting the **GrokBot avatar animation engine** — 
 
 The page practices what it preaches: **0 third-party runtime dependencies, 0 build step** — plain HTML + CSS + native ES modules, every demo computed live. The showcase bots (hero and sections 01/03/05/07/08) run `js/vendor/grok-player.js`, a faithful line-level port of the original engine, driven by `js/vendor/grok-recipes.json` (animation data extracted from the local app).
 
-There's also an **[animation editor](https://arvinyin1.github.io/grokbot-animation-anatomy/editor.html)**: a clip/state editor built on the same engine — visual keyframe tracks (position / rotation / squash / scale / lids / expression), draggable keyframe diamonds, per-keyframe Bézier easing editor, state config (face / morph / next / holdSeconds), live preview in the real engine, and JSON export in the engine's native format.
+There's also an **[animation editor](https://grokbot.yin.wiki/editor.html)**: a clip/state editor built on the same engine — visual keyframe tracks (position / rotation / squash / scale / lids / expression), draggable keyframe diamonds, per-keyframe Bézier easing editor, state config (face / morph / next / holdSeconds), live preview in the real engine, and JSON export in the engine's native format.
 
 <p align="center">
   <img src="docs/media/gallery.png" width="49%" alt="State gallery — all 53 states running live engine instances">
@@ -25,7 +25,7 @@ There's also an **[animation editor](https://arvinyin1.github.io/grokbot-animati
 
 ## Live demo / Run
 
-GitHub Pages: **https://arvinyin1.github.io/grokbot-animation-anatomy/**
+GitHub Pages: **https://grokbot.yin.wiki/**
 
 Or run locally (ES modules require HTTP, don't open the file directly):
 

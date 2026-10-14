@@ -12,7 +12,7 @@
 
 页面本身即是对这套哲学的实践：**0 第三方运行时依赖、0 构建**，纯 HTML + CSS + 原生 ES modules，所有 demo 实时计算。showcase 位置的 bot（hero、第 01/03/05/07/08 节）运行的是 `js/vendor/grok-player.js`——原版引擎的逐行移植，由 `js/vendor/grok-recipes.json`（从本机 app 提取的动画数据）驱动。
 
-另有 **[动画编辑器](https://arvinyin1.github.io/grokbot-animation-anatomy/editor.html)**：基于同一引擎的 clip/状态编辑器——可视化编辑关键帧轨道（position / rotation / squash / scale / lids / expression）、时间轴菱形拖拽、逐关键帧贝塞尔缓动编辑器、状态配置（face / morph / next / holdSeconds），真引擎实时预览，导出与原引擎同构的 JSON。
+另有 **[动画编辑器](https://grokbot.yin.wiki/editor.html)**：基于同一引擎的 clip/状态编辑器——可视化编辑关键帧轨道（position / rotation / squash / scale / lids / expression）、时间轴菱形拖拽、逐关键帧贝塞尔缓动编辑器、状态配置（face / morph / next / holdSeconds），真引擎实时预览，导出与原引擎同构的 JSON。
 
 <p align="center">
   <img src="docs/media/gallery.png" width="49%" alt="状态陈列馆——53 个状态同页运行真实引擎实例">
@@ -25,7 +25,7 @@
 
 ## 在线预览 / 运行
 
-GitHub Pages：**https://arvinyin1.github.io/grokbot-animation-anatomy/**
+GitHub Pages：**https://grokbot.yin.wiki/**
 
 或本地运行（ES modules 需要通过 HTTP 访问，不能直接双击打开 index.html）：
 
