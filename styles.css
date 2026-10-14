@@ -358,8 +358,12 @@ pre.code {
 /* ---------- 动画编辑器（editor.html） ---------- */
 .editor2 { max-width: 1240px; display: grid; gap: 22px; padding: 48px 28px; }
 .ed2-top { display: grid; grid-template-columns: 380px 1fr; gap: 22px; align-items: stretch; }
+/* 固定检查器最小高度：选中/取消选中关键帧时面板内容高度变化不会推动下方时间轴 */
+.ed2-inspector { min-height: 580px; }
 .ed-stage { width: 280px; margin: 0 auto; }
 .ed-transport { display: flex; gap: 14px; align-items: center; margin-top: 14px; justify-content: center; }
+#ed-time { white-space: nowrap; flex-shrink: 0; }
+.ed-transport label { white-space: nowrap; flex-shrink: 0; }
 .ed-transport button {
   font-family: var(--sans); font-size: 13px; cursor: pointer; min-width: 84px;
   border: 1px solid #d4d4dd; background: #fff; color: var(--ink);
@@ -412,8 +416,21 @@ pre.code {
   position: absolute; top: 50%; width: 11px; height: 11px; margin: -5.5px 0 0 -5.5px;
   background: var(--kc, #2e6bff); transform: rotate(45deg); border-radius: 2.5px;
   cursor: ew-resize; border: 1.5px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,0.15);
+  z-index: 2;
 }
-.ed2-kf.sel { box-shadow: 0 0 0 2px var(--kc, #2e6bff); z-index: 1; }
+/* 表情事件：圆形标记，与数值轨道的菱形区分 */
+.ed2-kf.expr { transform: none; border-radius: 50%; }
+.ed2-kf.sel { box-shadow: 0 0 0 2px var(--kc, #2e6bff); z-index: 2; }
+/* workArea（rest 帧）高亮色带 */
+.ed2-workarea {
+  position: absolute; top: 26px; bottom: 0; z-index: 1; pointer-events: none;
+  background: rgba(46,107,255,0.07); border-left: 1px solid rgba(46,107,255,0.35);
+}
+/* 框选矩形 */
+.ed2-marquee {
+  position: absolute; z-index: 4; pointer-events: none;
+  border: 1px solid var(--accent, #2e6bff); background: rgba(46,107,255,0.10);
+}
 .ed2-playhead {
   position: absolute; top: 0; bottom: 0; width: 2px; background: #e14a4a;
   pointer-events: none; z-index: 3;
@@ -435,7 +452,7 @@ pre.code {
 .bz-curve { stroke: var(--accent); stroke-width: 2; fill: none; }
 .bz-handle { fill: #fff; stroke: var(--accent); stroke-width: 2; cursor: grab; }
 .ed-ease-nums { display: flex; gap: 6px; margin-top: 8px; }
-.ed-ease-nums input { width: 56px; font-size: 12px; padding: 3px 5px; border: 1px solid #d4d4dd; border-radius: 6px; }
+.ed-ease-nums input { width: 68px; font-size: 12px; padding: 3px 5px; border: 1px solid #d4d4dd; border-radius: 6px; }
 .ed2-inspector select {
   font-size: 13px; padding: 5px 8px; border: 1px solid #d4d4dd; border-radius: 8px;
   background: #fff; color: var(--ink); max-width: 100%;
