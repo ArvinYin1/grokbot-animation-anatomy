@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+body{margin:0;background:#fff;display:flex;align-items:center;justify-content:center;height:100vh}
+#s{width:340px;height:340px}
+</style></head><body><div id="s"></div>
+<script type="module">
+// 确定性单帧渲染器：?t=秒数&schedule=idle:0,thinking:1.3,waiting:3.1
+// 不依赖 rAF —— 手动 1/60 步进到 t（途中按 schedule 切状态），渲染一帧。
+import { makeConfig, createRuntime, createStateMachine, buildModel,
+         makeMorphGenerators, makeTrail, createRenderer } from '../../js/vendor/grok-player.js';
+
+const q = new URLSearchParams(location.search);
+const T = parseFloat(q.get('t') ?? '0');
+const schedule = (q.get('schedule') ?? 'idle:0').split(',')
+  .map((s) => { const [st, at] = s.split(':'); return { st, at: parseFloat(at) }; })
+  .sort((a, b) => a.at - b.at);
+
+const recipes = await fetch('../../js/vendor/grok-recipes.json').then((r) => r.json());
+const G = makeConfig(recipes);
+const gE = makeMorphGenerators(G);
+const trail = makeTrail(G);
+const rt = createRuntime(G, {});
+const nx = createStateMachine(G, rt, schedule[0].st, { seed: 2654435769, firstPhase: 0 });
+const renderer = createRenderer(document, 'cap', 340, G);
+document.getElementById('s').appendChild(renderer.svg);
+const theme = { ink: [0, 0, 0], spot: [0, 0, 0], cutout: true };
+const warn = () => {};
+
+const dt = 1 / 60;
+let si = 1;
+for (let t = 0; t < T - 1e-9; t += dt) {
+  while (si < schedule.length && t >= schedule[si].at - 1e-9) nx.setState(schedule[si++].st);
+  nx.advance(dt); rt.advance(dt);
+}
+renderer.render(buildModel(rt.frame(), theme, 340, G, gE, trail, warn));
+document.title = 'READY';
+</script></body></html>

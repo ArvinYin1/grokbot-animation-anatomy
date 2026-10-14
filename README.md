@@ -4,9 +4,24 @@
 
 An interactive explainer dissecting the **GrokBot avatar animation engine** — how the Grok Bot macOS app (Electron) animates its avatar with zero animation libraries, and why its procedural-SVG approach beats Lottie, video/GIF, WebGL shaders and CSS animation for a living, interactive character.
 
-The page practices what it preaches: **0 third-party runtime dependencies, 0 build step** — plain HTML + CSS + native ES modules, every demo computed live. The showcase bots (hero, blink, state-machine and gallery sections) run `js/vendor/grok-player.js`, a faithful line-level port of the original engine, driven by `js/vendor/grok-recipes.json` (animation data extracted from the local app).
+<p align="center">
+  <img src="docs/media/hero.gif" width="260" alt="GrokBot avatar idling — every frame computed at runtime">
+  &nbsp;&nbsp;&nbsp;
+  <img src="docs/media/states.gif" width="260" alt="State switching: idle → thinking → waiting → idle, with spring-driven decor">
+</p>
 
-There's also an **[animation editor](editor.html)** (`/editor.html`): a clip/state editor built on the same engine — visual keyframe tracks (position / rotation / squash / scale / lids / expression), easing and state config (face / morph / next / holdSeconds), live preview in the real engine, and JSON export in the engine's native format.
+The page practices what it preaches: **0 third-party runtime dependencies, 0 build step** — plain HTML + CSS + native ES modules, every demo computed live. The showcase bots (hero and sections 01/03/05/07/08) run `js/vendor/grok-player.js`, a faithful line-level port of the original engine, driven by `js/vendor/grok-recipes.json` (animation data extracted from the local app).
+
+There's also an **[animation editor](https://arvinyin1.github.io/grokbot-animation-anatomy/editor.html)**: a clip/state editor built on the same engine — visual keyframe tracks (position / rotation / squash / scale / lids / expression), draggable keyframe diamonds, per-keyframe Bézier easing editor, state config (face / morph / next / holdSeconds), live preview in the real engine, and JSON export in the engine's native format.
+
+<p align="center">
+  <img src="docs/media/gallery.png" width="49%" alt="State gallery — all 53 states running live engine instances">
+  <img src="docs/media/editor.png" width="49%" alt="Animation editor — timeline, keyframes, easing editor, live engine preview">
+</p>
+<p align="center">
+  <img src="docs/media/clip-lab.png" width="49%" alt="Cubic-Bézier playground and live clip track inspector">
+  <img src="docs/media/state-machine.png" width="49%" alt="State machine demo with transition-anatomy timeline">
+</p>
 
 ## Live demo / Run
 
@@ -31,6 +46,17 @@ python3 -m http.server 8000
 - **State machine & recipe shuffle** — 53 states, seeded-PRNG clip shuffle with random phase; plus a transition-anatomy timeline (Bézier bridge vs measured springs)
 - **State gallery** — all 53 states running live engine instances on one page, filterable by the five lifecycle groups, click to poke
 - **Head-to-head comparison** — procedural SVG vs Lottie vs video/GIF vs WebGL vs CSS, plus a decision wizard
+
+## Repository layout
+
+- `index.html` + `js/sections/` — the explainer page, one ES module per section
+- `editor.html` + `js/editor.js` — the animation editor
+- `js/vendor/grok-player.js` — line-level port of the original engine (browser ESM, zero deps)
+- `js/vendor/grok-recipes.json` — animation data extracted from the app: 28 clips, 53 states, 9 expressions, 25 shapes, all constants
+- `tools/verify-frame.mjs` — frame-by-frame numeric regression of the port against the original engine
+- `tools/extract-recipes.mjs` — extraction script for the animation data
+- `tools/capture/` — deterministic frame renderer used to produce the README GIFs
+- `docs/media/` — README assets (every one captured from the running port, not hand-drawn)
 
 ## Source
 

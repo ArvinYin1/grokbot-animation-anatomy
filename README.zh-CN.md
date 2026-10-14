@@ -4,9 +4,24 @@
 
 一个面向开发者的中文交互式长页，逆向解剖 macOS 应用 **Grok Bot**（Electron）的 **bot 头像动画引擎**：它如何不依赖任何动画库完成全部角色动画，以及程序化 SVG 方案相对于 Lottie / 视频 / WebGL shader / CSS 动画的优势。
 
+<p align="center">
+  <img src="docs/media/hero.gif" width="260" alt="待机中的 GrokBot 头像——每一帧都是运行时算出来的">
+  &nbsp;&nbsp;&nbsp;
+  <img src="docs/media/states.gif" width="260" alt="状态切换：idle → thinking → waiting → idle，装饰由弹簧驱动">
+</p>
+
 页面本身即是对这套哲学的实践：**0 第三方运行时依赖、0 构建**，纯 HTML + CSS + 原生 ES modules，所有 demo 实时计算。showcase 位置的 bot（hero、第 01/03/05/07/08 节）运行的是 `js/vendor/grok-player.js`——原版引擎的逐行移植，由 `js/vendor/grok-recipes.json`（从本机 app 提取的动画数据）驱动。
 
-另有 **[动画编辑器](editor.html)**（`/editor.html`）：基于同一引擎的 clip/状态编辑器——可视化编辑关键帧轨道（position / rotation / squash / scale / lids / expression）、缓动与状态配置（face / morph / next / holdSeconds），真引擎实时预览，导出与原引擎同构的 JSON。
+另有 **[动画编辑器](https://arvinyin1.github.io/grokbot-animation-anatomy/editor.html)**：基于同一引擎的 clip/状态编辑器——可视化编辑关键帧轨道（position / rotation / squash / scale / lids / expression）、时间轴菱形拖拽、逐关键帧贝塞尔缓动编辑器、状态配置（face / morph / next / holdSeconds），真引擎实时预览，导出与原引擎同构的 JSON。
+
+<p align="center">
+  <img src="docs/media/gallery.png" width="49%" alt="状态陈列馆——53 个状态同页运行真实引擎实例">
+  <img src="docs/media/editor.png" width="49%" alt="动画编辑器——时间轴、关键帧、缓动编辑、真引擎预览">
+</p>
+<p align="center">
+  <img src="docs/media/clip-lab.png" width="49%" alt="三次贝塞尔游乐场与活 clip 轨道检视">
+  <img src="docs/media/state-machine.png" width="49%" alt="状态机 demo 与切换解剖时间线">
+</p>
 
 ## 在线预览 / 运行
 
@@ -31,6 +46,17 @@ python3 -m http.server 8000
 - **状态机与 recipe 洗牌** — 53 状态、种子化 PRNG clip 洗牌、随机相位；附切换解剖时间线（贝塞尔 bridge vs 弹簧实测）
 - **状态陈列馆** — 53 个状态同页全部跑真引擎实例，按五个生命周期分组筛选，点击可 poke
 - **横向对比** — 程序化 SVG vs Lottie vs 视频/GIF vs WebGL vs CSS + 选型向导
+
+## 仓库结构
+
+- `index.html` + `js/sections/` — 解析长页，每节一个 ES module
+- `editor.html` + `js/editor.js` — 动画编辑器
+- `js/vendor/grok-player.js` — 原版引擎的逐行移植（浏览器 ESM，0 依赖）
+- `js/vendor/grok-recipes.json` — 从本机 app 提取的动画数据：28 条 clip、53 个状态、9 个表情、25 种形状、全部常量
+- `tools/verify-frame.mjs` — 移植版与原引擎的逐帧数值回归
+- `tools/extract-recipes.mjs` — 动画数据提取脚本
+- `tools/capture/` — README 动图用的确定性单帧渲染器
+- `docs/media/` — README 素材（全部由运行中的移植引擎实截，非手绘示意）
 
 ## 来源
 
