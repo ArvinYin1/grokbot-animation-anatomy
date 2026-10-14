@@ -1,8 +1,8 @@
-# GrokBot Avatar Anatomy
+# GrokBot Animation Anatomy
 
 [English](README.md) | [中文](README.zh-CN.md)
 
-An interactive explainer page (in Chinese) dissecting how the **Grok Bot** macOS app's avatar animation engine works — and why its procedural-SVG approach beats Lottie, video/GIF, WebGL shaders and CSS animation for a living, interactive character.
+An interactive explainer dissecting the **GrokBot avatar animation engine** — how the Grok Bot macOS app (Electron) animates its avatar with zero animation libraries, and why its procedural-SVG approach beats Lottie, video/GIF, WebGL shaders and CSS animation for a living, interactive character.
 
 The page practices what it preaches: **0 third-party runtime dependencies, 0 build step** — plain HTML + CSS + native ES modules, every demo computed live. The showcase bots (hero, blink, state-machine and gallery sections) run `js/vendor/grok-player.js`, a faithful line-level port of the original engine, driven by `js/vendor/grok-recipes.json` (animation data extracted from the local app).
 
@@ -10,7 +10,7 @@ There's also an **[animation editor](editor.html)** (`/editor.html`): a clip/sta
 
 ## Live demo / Run
 
-GitHub Pages: **https://arvinyin1.github.io/grokbot-avatar-anatomy/**
+GitHub Pages: **https://arvinyin1.github.io/grokbot-animation-anatomy/**
 
 Or run locally (ES modules require HTTP, don't open the file directly):
 
@@ -23,10 +23,12 @@ python3 -m http.server 8000
 
 - **Every frame is computed** — procedural SVG + a DOM-diff writer, with a live attribute panel
 - **Shape morph: radial outline interpolation** — 192 ray samples, per-angle lerp, sampling-density comparison
+- **Choreography in Bézier: clip keyframes** — 28 hand-authored clips × 6 tracks, cubic-bezier easing with out-of-range overshoot; draggable-curve playground + a live track inspector synced to the running engine
 - **Springs, not timers** — a 120 Hz semi-implicit Euler integrator playground vs ease-out
+- **Where the springs live** — live measured curves of the amount / swap / spin spring trio during state switches
 - **Pseudo-3D: the eyes live on a sphere** — Rodrigues rotation + orthographic projection, flat-vs-sphere comparison
 - **Blinks & liveliness** — blinks are clip-embedded keyframe events (0.26 s, closed at 45%) + imperative `blink()`; no ambient scheduler exists in the original bundle
-- **State machine & recipe shuffle** — 53 states, seeded-PRNG clip shuffle with random phase; showcase runs the ported original engine
+- **State machine & recipe shuffle** — 53 states, seeded-PRNG clip shuffle with random phase; plus a transition-anatomy timeline (Bézier bridge vs measured springs)
 - **State gallery** — all 53 states running live engine instances on one page, filterable by the five lifecycle groups, click to poke
 - **Head-to-head comparison** — procedural SVG vs Lottie vs video/GIF vs WebGL vs CSS, plus a decision wizard
 
