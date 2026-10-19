@@ -6,23 +6,31 @@
 <title>Grok Bot 头像解剖 —— 一个不用任何动画库的角色动画引擎</title>
 <meta name="description" content="基于对 macOS 应用 Grok Bot（Electron）app.asar 解包的逆向分析：程序化 SVG bot 头像动画引擎的实现原理。">
 <link rel="stylesheet" href="styles.css?v=3">
+<link rel="stylesheet" href="styles-shapes.css?v=1">
 </head>
 <body>
 
 <nav class="topnav">
   <span class="brand">Grok Bot 头像解剖</span>
-  <span class="nav-links">
-    <a href="#sec-svg">SVG</a>
-    <a href="#sec-morph">Morph</a>
-    <a href="#sec-clip">贝塞尔</a>
-    <a href="#sec-spring">弹簧</a>
-    <a href="#sec-springs">弹簧分工</a>
-    <a href="#sec-sphere">伪 3D</a>
-    <a href="#sec-blink">眨眼</a>
-    <a href="#sec-states">状态机</a>
-    <a href="#sec-gallery">陈列馆</a>
-    <a href="#sec-compare">对比</a>
+  <span class="nav-pages">
+    <a href="index.html" aria-current="page">总览</a>
+    <a href="shapes.html">形状系统</a>
+    <a href="workshop.html">形状工作台</a>
+    <a href="editor.html">动画编辑器</a>
   </span>
+</nav>
+
+<nav class="subnav">
+  <a href="#sec-svg">SVG</a>
+  <a href="#sec-morph">Morph</a>
+  <a href="#sec-clip">贝塞尔</a>
+  <a href="#sec-spring">弹簧</a>
+  <a href="#sec-springs">弹簧分工</a>
+  <a href="#sec-sphere">伪 3D</a>
+  <a href="#sec-blink">眨眼</a>
+  <a href="#sec-states">状态机</a>
+  <a href="#sec-gallery">陈列馆</a>
+  <a href="#sec-compare">对比</a>
 </nav>
 
 <!-- ============ 0. HERO ============ -->
