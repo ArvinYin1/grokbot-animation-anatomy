@@ -50,7 +50,11 @@ python3 -m http.server 8000
 ## Repository layout
 
 - `index.html` + `js/sections/` — the explainer page, one ES module per section
+- `shapes.html` — the shape-system explainer
+- `workshop.html` — the shape workshop (add-your-own-shape guide + playground)
 - `editor.html` + `js/editor.js` — the animation editor
+- `glow.html` + `js/glow.js` — Glow Lab: the pseudo-3D look comes from fill, not geometry
+- `design-system/` — site-wide design tokens, components, shared shell and per-page CSS (zero build, hand-written)
 - `js/vendor/grok-player.js` — line-level port of the original engine (browser ESM, zero deps)
 - `js/vendor/grok-recipes.json` — animation data extracted from the app: 28 clips, 53 states, 9 expressions, 25 shapes, all constants
 - `tools/verify-frame.mjs` — frame-by-frame numeric regression of the port against the original engine

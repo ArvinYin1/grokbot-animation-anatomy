@@ -1,0 +1,41 @@
+/* ============================================================
+   page-glow.css — glow.html 页面私有样式
+   依赖 tokens.css + components.css + site.css（在其后引入）。
+   ============================================================ */
+
+/* 四张演示卡片的网格 */
+.glow-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+  margin: 18px 0 8px;
+}
+
+.glow-card {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+.glow-card h3 {
+  margin: 0 0 12px;
+  font-size: var(--text-base);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--foreground);
+}
+.glow-card .demo {
+  padding: 16px;
+}
+.glow-card .demo .stage {
+  width: min(220px, 100%);
+}
+
+/* 参数说明：mono 小字 */
+.glow-params {
+  margin: 12px 0 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: 1.65;
+  color: var(--foreground-tertiary);
+  overflow-wrap: anywhere;
+}

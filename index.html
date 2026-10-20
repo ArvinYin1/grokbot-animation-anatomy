@@ -1,472 +1,484 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>document.documentElement.dataset.theme = localStorage.getItem('gb-theme') || 'dark';</script>
 <title>Grok Bot 头像解剖 —— 一个不用任何动画库的角色动画引擎</title>
 <meta name="description" content="基于对 macOS 应用 Grok Bot（Electron）app.asar 解包的逆向分析：程序化 SVG bot 头像动画引擎的实现原理。">
-<link rel="stylesheet" href="styles.css?v=3">
-<link rel="stylesheet" href="styles-shapes.css?v=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="design-system/tokens.css">
+<link rel="stylesheet" href="design-system/components.css">
+<link rel="stylesheet" href="design-system/site.css">
+<link rel="stylesheet" href="design-system/page-index.css">
 </head>
 <body>
 
-<nav class="topnav">
-  <span class="brand">Grok Bot 头像解剖</span>
-  <span class="nav-pages">
-    <a href="index.html" aria-current="page">总览</a>
-    <a href="shapes.html">形状系统</a>
-    <a href="workshop.html">形状工作台</a>
-    <a href="editor.html">动画编辑器</a>
-  </span>
-</nav>
-
-<nav class="subnav">
-  <a href="#sec-svg">SVG</a>
-  <a href="#sec-morph">Morph</a>
-  <a href="#sec-clip">贝塞尔</a>
-  <a href="#sec-spring">弹簧</a>
-  <a href="#sec-springs">弹簧分工</a>
-  <a href="#sec-sphere">伪 3D</a>
-  <a href="#sec-blink">眨眼</a>
-  <a href="#sec-states">状态机</a>
-  <a href="#sec-gallery">陈列馆</a>
-  <a href="#sec-compare">对比</a>
-</nav>
-
-<!-- ============ 0. HERO ============ -->
-<header class="hero">
-  <div class="hero-inner">
-    <div class="hero-text">
-      <p class="kicker">基于对 Grok Bot（Electron, macOS）app.asar 解包的逆向分析</p>
-      <h1>一个不用任何<br>动画库的角色<br>动画引擎</h1>
-      <p class="lede">Grok Bot 的头像引擎：没有 Lottie json，没有 gif/webm/mp4，
-        没有 glsl/wgsl，没有一张图片——全部图形在运行时用代码算出来。
-        这个页面上你看到的每一个 demo，都是它讲的那项技术本身。</p>
-      <div class="badges">
-        <span class="badge"><b>0</b> 个动画库</span>
-        <span class="badge"><b>0</b> 字节素材</span>
-        <span class="badge"><b>60fps</b> 程序化生成</span>
-      </div>
-    </div>
-    <div class="hero-stage-wrap">
-      <div class="hero-stage paper"></div>
-      <p class="stage-caption">原版引擎移植（grok-player）· 原版动画数据 —— 动一下鼠标，它会看你</p>
-    </div>
+<header class="topbar">
+  <a class="topbar__brand" href="index.html">
+    <span class="topbar__mark"></span>
+    GrokBot 解剖
+  </a>
+  <div class="topbar__end">
+    <button class="icon-btn" data-theme-toggle title="切换主题" aria-label="切换主题">
+      <svg data-icon-moon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/></svg>
+      <svg data-icon-sun viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="display:none"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    </button>
   </div>
 </header>
 
-<main>
+<div class="shell shell--wide">
 
-<!-- ============ 1. 程序化 SVG ============ -->
-<section class="section" id="sec-svg">
-  <div class="col-text">
-    <p class="sec-no">01</p>
-    <h2>每帧都是算出来的</h2>
-    <p>这套引擎在 JS 里维护一棵<strong>虚拟 SVG 节点树</strong>，每帧重新计算所有图形参数，
-      再由一个 <strong>DOM diff 写入器</strong>把变化落到真实 DOM：结构不变时只写
-      <code>attribute</code>，结构变了才 <code>createElementNS</code> 重建。</p>
-    <p>身体是 <code>&lt;path fill&gt;</code>；眼睛不是盖在身体上的白色形状，而是从身体上<strong>挖出来的洞</strong>——所以身体下面是
-      什么背景，眼睛就透出什么背景。挖洞有两条路：sphere 模式下直接把眼睛的地平线弧
-      <strong>布尔裁剪进身体 path</strong>；morph 状态下改用 SVG <code>&lt;mask&gt;</code>。</p>
-    <p>右侧属性面板实时显示当前帧的 <code>path d</code> 片段与各层 <code>transform</code>，
-      并用 MutationObserver 聚合每帧的<strong>真实 DOM 写入</strong>。打开「显示 DOM diff」
-      可以看到：idle 时<strong>每帧只有一次写入</strong>——身体 <code>path[d]</code>
-      （眼睛的裁切弧就长在这条 path 里，所以它的长度随眼神逐帧变化）。</p>
-  </div>
-  <div class="col-demo">
-    <div class="paper demo svg-demo">
-      <div class="stage"></div>
-      <div class="panel">
-        <div class="panel-row" data-row="bodyD"><span class="k">body path[d]</span><span class="v">—</span></div>
-        <div class="panel-row" data-row="eyeD"><span class="k">mask 眼洞[d]</span><span class="v">—</span></div>
-        <div class="panel-row" data-row="headTr"><span class="k">head g[transform]</span><span class="v">—</span></div>
-        <div class="panel-row" data-row="zoomTr"><span class="k">zoom g[transform]</span><span class="v">—</span></div>
-        <div class="panel-row" data-row="dom"><span class="k">帧内 DOM 写入</span><span class="v">—</span></div>
-        <div class="panel-row" data-row="mask"><span class="k">mask 结构</span><span class="v">—</span></div>
-      </div>
-      <div class="controls">
-        <button data-act="step" aria-pressed="false">逐帧步进：关</button>
-        <button data-act="step1" hidden>+1 帧</button>
-        <button data-act="diff" aria-pressed="false">显示 DOM diff：关</button>
-      </div>
-      <p class="hint">本卡片与 hero、03/05/07/08 节同为原版引擎移植（grok-player）；属性面板用
-        MutationObserver 观察真实 SVG 子树的每帧写入。「逐帧步进」把引擎切到确定性模式（frozenAt），一次只推进 1/60 秒。</p>
+  <aside class="sidebar">
+    <div class="sidebar__group">
+      <p class="sidebar__label">解析</p>
+      <a class="sidebar__item" href="index.html" aria-current="page">总览</a>
+      <a class="sidebar__item" href="shapes.html">形状系统</a>
     </div>
-  </div>
-</section>
+    <div class="sidebar__group">
+      <p class="sidebar__label">工具</p>
+      <a class="sidebar__item" href="workshop.html">形状工作台</a>
+      <a class="sidebar__item" href="editor.html">动画编辑器</a>
+      <a class="sidebar__item" href="glow.html">Glow Lab</a>
+    </div>
+  </aside>
 
-<!-- ============ 2. 径向轮廓 morph ============ -->
-<section class="section" id="sec-morph">
-  <div class="col-text">
-    <p class="sec-no">02</p>
-    <h2>形状 morph：径向轮廓插值</h2>
-    <p>怎么把圆形「变成」爱心？它的做法是<strong>向 192 个基准角度方向发射线</strong>
-      （再叠加轮廓顶点处的角度），求每条射线与形状轮廓的交点，得到一个半径数组 <code>r(θ)</code>。
-      morph 就是对两个形状的 <code>r(θ)</code> <strong>逐角度线性插值</strong>，
-      插值权重由弹簧驱动——所以形变本身也带物理感。</p>
-    <p>原引擎的形状注册表有 <strong>25 种</strong>（cloud / square / sparkle / clover / heartChubby /
-      star6 / teardrop / house / gem / egg / capsule…），但对外只暴露几个别名：
-      blob / sphereWide / arch / spark / star / heart / hexagon（见提取数据
-      <code>grok-recipes.json</code> 的 <code>shapes.aliases</code>）。</p>
-    <p>右边拖 slider：圆形 → 六角星 → 爱心 → 水滴连续混合。打开「显示采样射线」可以看到
-      射线和交点；把采样数从 192 降到 8，看插值质量如何崩坏——采样密度就是这套方案的精度旋钮。</p>
-  </div>
-  <div class="col-demo">
-    <div class="paper demo">
-      <svg class="morph-canvas" viewBox="0 0 420 420" aria-label="径向轮廓 morph 演示">
-        <g class="rays"></g>
-        <path class="shape" d=""></path>
-        <g class="hits"></g>
-      </svg>
-      <p class="morph-label mono">—</p>
-      <div class="controls col">
-        <label class="ctl-row">形状混合
-          <input type="range" data-morph min="0" max="3" step="0.01" value="0" aria-label="形状混合滑杆">
-        </label>
-        <div class="tick-row mono"><span>圆</span><span>星</span><span>爱心</span><span>水滴</span></div>
-        <div class="ctl-row">
-          <label><input type="checkbox" data-rays> 显示采样射线与交点</label>
-          <label>采样数
-            <select data-count aria-label="采样数">
-              <option value="8">8</option>
-              <option value="24">24</option>
-              <option value="64">64</option>
-              <option value="192" selected>192（原引擎）</option>
-            </select>
-          </label>
+  <main class="content prose">
+
+    <!-- ============ HERO ============ -->
+    <div class="duo">
+      <div class="page-head">
+        <p class="page-head__eyebrow">基于对 Grok Bot（Electron, macOS）app.asar 解包的逆向分析</p>
+        <h1>一个不用任何动画库的角色动画引擎</h1>
+        <p class="page-head__lede">
+          Grok Bot 的头像引擎：没有 Lottie json，没有 gif/webm/mp4，
+          没有 glsl/wgsl，没有一张图片——全部图形在运行时用代码算出来。
+          这个页面上你看到的每一个 demo，都是它讲的那项技术本身。
+        </p>
+        <p style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
+          <span class="badge badge--accent">0 个动画库</span>
+          <span class="badge">0 字节素材</span>
+          <span class="badge badge--success">60fps 程序化生成</span>
+        </p>
+      </div>
+      <div class="hero-stage-wrap">
+        <div class="hero-stage paper"></div>
+        <p class="stage-caption">原版引擎移植（grok-player）· 原版动画数据 —— 动一下鼠标，它会看你</p>
+      </div>
+    </div>
+
+    <!-- ============ 1. 程序化 SVG ============ -->
+    <section id="sec-svg" class="reveal">
+      <div class="duo duo--start">
+        <div>
+          <h2>每帧都是算出来的</h2>
+          <p>这套引擎在 JS 里维护一棵<strong>虚拟 SVG 节点树</strong>，每帧重新计算所有图形参数，
+            再由一个 <strong>DOM diff 写入器</strong>把变化落到真实 DOM：结构不变时只写
+            <code>attribute</code>，结构变了才 <code>createElementNS</code> 重建。</p>
+          <p>身体是 <code>&lt;path fill&gt;</code>；眼睛不是盖在身体上的白色形状，而是从身体上<strong>挖出来的洞</strong>——所以身体下面是
+            什么背景，眼睛就透出什么背景。挖洞有两条路：sphere 模式下直接把眼睛的地平线弧
+            <strong>布尔裁剪进身体 path</strong>；morph 状态下改用 SVG <code>&lt;mask&gt;</code>。</p>
+          <p>右侧属性面板实时显示当前帧的 <code>path d</code> 片段与各层 <code>transform</code>，
+            并用 MutationObserver 聚合每帧的<strong>真实 DOM 写入</strong>。打开「显示 DOM diff」
+            可以看到：idle 时<strong>每帧只有一次写入</strong>——身体 <code>path[d]</code>
+            （眼睛的裁切弧就长在这条 path 里，所以它的长度随眼神逐帧变化）。</p>
+        </div>
+        <div class="paper demo svg-demo">
+          <div class="stage"></div>
+          <div class="panel">
+            <div class="panel-row" data-row="bodyD"><span class="k">body path[d]</span><span class="v">—</span></div>
+            <div class="panel-row" data-row="eyeD"><span class="k">mask 眼洞[d]</span><span class="v">—</span></div>
+            <div class="panel-row" data-row="headTr"><span class="k">head g[transform]</span><span class="v">—</span></div>
+            <div class="panel-row" data-row="zoomTr"><span class="k">zoom g[transform]</span><span class="v">—</span></div>
+            <div class="panel-row" data-row="dom"><span class="k">帧内 DOM 写入</span><span class="v">—</span></div>
+            <div class="panel-row" data-row="mask"><span class="k">mask 结构</span><span class="v">—</span></div>
+          </div>
+          <div class="controls">
+            <button data-act="step" aria-pressed="false">逐帧步进：关</button>
+            <button data-act="step1" hidden>+1 帧</button>
+            <button data-act="diff" aria-pressed="false">显示 DOM diff：关</button>
+          </div>
+          <p class="hint">本卡片与 hero、03/05/07/08 节同为原版引擎移植（grok-player）；属性面板用
+            MutationObserver 观察真实 SVG 子树的每帧写入。「逐帧步进」把引擎切到确定性模式（frozenAt），一次只推进 1/60 秒。</p>
         </div>
       </div>
-    </div>
-  </div>
-</section>
+    </section>
 
-<!-- ============ 3. clip：贝塞尔关键帧 ============ -->
-<section class="section" id="sec-clip">
-  <div class="col-text">
-    <p class="sec-no">03</p>
-    <h2>编排用贝塞尔：clip 关键帧</h2>
-    <p>53 个状态的全部身体动画，底层只有 <strong>28 条手工关键帧 clip</strong>：每条 clip 分
-      position / rotation / squash / zoom / lids / expression <strong>六条轨道</strong>，
-      相邻关键帧之间各带一条独立的三次贝塞尔缓动 <code>ease:[x1,y1,x2,y2]</code>——与 CSS
-      <code>cubic-bezier()</code> 同算法（牛顿迭代解出 x(t)，再取 y）。</p>
-    <p>和 CSS 不同的是：<strong>y 允许超出 [0,1]</strong>。比如 Idle_B 的缩放轨道就有
-      <code>[.87,−.08,.30,1.02]</code>——起点下潜、终点过冲，那点「肉感」回弹正来自超界。
-      右边上面拖动两个控制点试试；预设全部取自真实 clip 数据，扫掠点的高度就是 ease 输出。</p>
-    <p>为什么编排动画不用弹簧？clip 是<strong>有死线的时刻表</strong>：第 1.62 秒头必须正好转到
-      −8.66°；状态切换时引擎现合成的 bridge clip（0.35s，<code>dx</code> 缓动），它结束的那一帧
-      就是状态机调度下一条 clip 的发令枪。弹簧是渐近的，给不了这个承诺——它的用武之地在第 05 节。</p>
-    <p>右下是<strong>活的</strong>：mini-bot 跑着原版引擎，曲线实时画出它<strong>此刻正在播放的
-      clip</strong> 的所选轨道（菱形 = 真实关键帧，悬停看数值与缓动）。想逐帧 scrub、改关键帧，
-      去 <a href="editor.html">动画编辑器</a>。</p>
-  </div>
-  <div class="col-demo">
-    <div class="paper demo">
-      <svg class="bez-canvas" viewBox="0 0 560 300" aria-label="三次贝塞尔缓动游乐场"></svg>
-      <div class="controls">
-        <button data-bez>默认 nr</button>
-        <button data-bez>bridge dx</button>
-        <button data-bez>表情 tb</button>
-        <button data-bez>Idle_B 回弹</button>
-        <span class="mono bez-readout"></span>
-      </div>
-      <div class="clip-live">
-        <div class="clip-live-head">
-          <div class="stage clip-stage"></div>
-          <div class="clip-live-side">
-            <p class="mono clip-live-name">—</p>
-            <select data-track aria-label="选择轨道"></select>
+    <!-- ============ 2. 径向轮廓 morph ============ -->
+    <section id="sec-morph" class="reveal">
+      <div class="duo duo--start">
+        <div>
+          <h2>形状 morph：径向轮廓插值</h2>
+          <p>怎么把圆形「变成」爱心？它的做法是<strong>向 192 个基准角度方向发射线</strong>
+            （再叠加轮廓顶点处的角度），求每条射线与形状轮廓的交点，得到一个半径数组 <code>r(θ)</code>。
+            morph 就是对两个形状的 <code>r(θ)</code> <strong>逐角度线性插值</strong>，
+            插值权重由弹簧驱动——所以形变本身也带物理感。</p>
+          <p>原引擎的形状注册表有 <strong>25 种</strong>（cloud / square / sparkle / clover / heartChubby /
+            star6 / teardrop / house / gem / egg / capsule…），但对外只暴露几个别名：
+            blob / sphereWide / arch / spark / star / heart / hexagon（见提取数据
+            <code>grok-recipes.json</code> 的 <code>shapes.aliases</code>）。</p>
+          <p>右边拖 slider：圆形 → 六角星 → 爱心 → 水滴连续混合。打开「显示采样射线」可以看到
+            射线和交点；把采样数从 192 降到 8，看插值质量如何崩坏——采样密度就是这套方案的精度旋钮。</p>
+        </div>
+        <div class="paper demo">
+          <svg class="morph-canvas" viewBox="0 0 420 420" aria-label="径向轮廓 morph 演示">
+            <g class="rays"></g>
+            <path class="shape" d=""></path>
+            <g class="hits"></g>
+          </svg>
+          <p class="morph-label mono">—</p>
+          <div class="controls col">
+            <label class="ctl-row">形状混合
+              <input type="range" data-morph min="0" max="3" step="0.01" value="0" aria-label="形状混合滑杆">
+            </label>
+            <div class="tick-row mono"><span>圆</span><span>星</span><span>爱心</span><span>水滴</span></div>
+            <div class="ctl-row">
+              <label><input type="checkbox" data-rays> 显示采样射线与交点</label>
+              <label>采样数
+                <select data-count aria-label="采样数">
+                  <option value="8">8</option>
+                  <option value="24">24</option>
+                  <option value="64">64</option>
+                  <option value="192" selected>192（原引擎）</option>
+                </select>
+              </label>
+            </div>
           </div>
         </div>
-        <svg class="clip-curve" viewBox="0 0 560 150" aria-label="当前 clip 轨道曲线"></svg>
-        <p class="hint">曲线 = bot 当前真实播放 clip 的轨道；播放头与引擎逐帧同步（debugFrame）。
-          clip 播完会洗牌换下一条，曲线自动跟着换。</p>
       </div>
-    </div>
-  </div>
-</section>
+    </section>
 
-<!-- ============ 4. 弹簧 ============ -->
-<section class="section" id="sec-spring">
-  <div class="col-text">
-    <p class="sec-no">04</p>
-    <h2>弹簧，不是定时器</h2>
-    <p>引擎里没有任何 <code>setTimeout</code> 动画，也没有 CSS transition。但运动并不都来自弹簧——
-      编排好的动作走上一节的贝塞尔 clip；<strong>弹簧只兜底「目标何时改变无法预知」的连续量</strong>：
-      装饰系统的 amount / swap / spin（下一节实测）和身体换形的交叉淡化权重
-      （<code>setBody</code>，ω=10）。它们共用一个<strong>手写的半隐式欧拉弹簧积分器</strong>，
-      以 <strong>120Hz 固定子步</strong>推进：</p>
-    <pre class="code">v += (-2ζω·v - ω²·(x - target))·dt
+    <!-- ============ 3. clip：贝塞尔关键帧 ============ -->
+    <section id="sec-clip" class="reveal">
+      <div class="duo duo--start">
+        <div>
+          <h2>编排用贝塞尔：clip 关键帧</h2>
+          <p>53 个状态的全部身体动画，底层只有 <strong>28 条手工关键帧 clip</strong>：每条 clip 分
+            position / rotation / squash / zoom / lids / expression <strong>六条轨道</strong>，
+            相邻关键帧之间各带一条独立的三次贝塞尔缓动 <code>ease:[x1,y1,x2,y2]</code>——与 CSS
+            <code>cubic-bezier()</code> 同算法（牛顿迭代解出 x(t)，再取 y）。</p>
+          <p>和 CSS 不同的是：<strong>y 允许超出 [0,1]</strong>。比如 Idle_B 的缩放轨道就有
+            <code>[.87,−.08,.30,1.02]</code>——起点下潜、终点过冲，那点「肉感」回弹正来自超界。
+            右边上面拖动两个控制点试试；预设全部取自真实 clip 数据，扫掠点的高度就是 ease 输出。</p>
+          <p>为什么编排动画不用弹簧？clip 是<strong>有死线的时刻表</strong>：第 1.62 秒头必须正好转到
+            −8.66°；状态切换时引擎现合成的 bridge clip（0.35s，<code>dx</code> 缓动），它结束的那一帧
+            就是状态机调度下一条 clip 的发令枪。弹簧是渐近的，给不了这个承诺——它的用武之地在第 05 节。</p>
+          <p>右下是<strong>活的</strong>：mini-bot 跑着原版引擎，曲线实时画出它<strong>此刻正在播放的
+            clip</strong> 的所选轨道（菱形 = 真实关键帧，悬停看数值与缓动）。想逐帧 scrub、改关键帧，
+            去 <a href="editor.html">动画编辑器</a>。</p>
+        </div>
+        <div class="paper demo">
+          <svg class="bez-canvas" viewBox="0 0 560 300" aria-label="三次贝塞尔缓动游乐场"></svg>
+          <div class="controls">
+            <button data-bez>默认 nr</button>
+            <button data-bez>bridge dx</button>
+            <button data-bez>表情 tb</button>
+            <button data-bez>Idle_B 回弹</button>
+            <span class="mono bez-readout"></span>
+          </div>
+          <div class="clip-live">
+            <div class="clip-live-head">
+              <div class="stage clip-stage"></div>
+              <div class="clip-live-side">
+                <p class="mono clip-live-name">—</p>
+                <select data-track aria-label="选择轨道"></select>
+              </div>
+            </div>
+            <svg class="clip-curve" viewBox="0 0 560 150" aria-label="当前 clip 轨道曲线"></svg>
+            <p class="hint">曲线 = bot 当前真实播放 clip 的轨道；播放头与引擎逐帧同步（debugFrame）。
+              clip 播完会洗牌换下一条，曲线自动跟着换。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 4. 弹簧 ============ -->
+    <section id="sec-spring" class="reveal">
+      <div class="duo duo--start">
+        <div>
+          <h2>弹簧，不是定时器</h2>
+          <p>引擎里没有任何 <code>setTimeout</code> 动画，也没有 CSS transition。但运动并不都来自弹簧——
+            编排好的动作走上一节的贝塞尔 clip；<strong>弹簧只兜底「目标何时改变无法预知」的连续量</strong>：
+            装饰系统的 amount / swap / spin（下一节实测）和身体换形的交叉淡化权重
+            （<code>setBody</code>，ω=10）。它们共用一个<strong>手写的半隐式欧拉弹簧积分器</strong>，
+            以 <strong>120Hz 固定子步</strong>推进：</p>
+          <pre class="code">v += (-2ζω·v - ω²·(x - target))·dt
 x += v·dt</pre>
-    <p>只调两个参数——刚度 <code>ω</code> 和阻尼 <code>ζ</code>——就能得到从 Q 弹到稳重的全部质感。
-      而传统的 ease-out 曲线是时间的函数：中途改变目标，它只能生硬跳变；弹簧只要改
-      <code>target</code>，速度天然连续。</p>
-    <p>零第三方动画库：没有 framer-motion，没有 gsap。</p>
-  </div>
-  <div class="col-demo">
-    <div class="paper demo spring-stage">
-      <div class="spring-flex">
-        <svg class="ball-stage" viewBox="0 0 140 200" aria-label="弹簧小球">
-          <line class="target-line" x1="10" y1="20" x2="130" y2="20"></line>
-          <g class="spring-ball"><circle cx="0" cy="0" r="22"></circle></g>
-        </svg>
-        <svg class="graph-stage" viewBox="0 0 560 180" aria-label="位移-时间曲线">
-          <line class="axis" x1="0" y1="166" x2="560" y2="166"></line>
-          <line class="axis dashed" x1="0" y1="20" x2="560" y2="20"></line>
-          <path class="ease-curve" d=""></path>
-          <path class="spring-curve" d=""></path>
-        </svg>
-      </div>
-      <div class="controls col">
-        <label class="ctl-row">刚度 ω = <span class="mono omega-val">10.0</span>
-          <input type="range" data-omega min="2" max="24" step="0.5" value="10" aria-label="刚度 ω">
-        </label>
-        <label class="ctl-row">阻尼 ζ = <span class="mono zeta-val">1.00</span>
-          <input type="range" data-zeta min="0.05" max="2.5" step="0.05" value="1" aria-label="阻尼 ζ">
-        </label>
-        <div class="ctl-row">
-          <button data-preset="10,0.25">欠阻尼 ζ=0.25</button>
-          <button data-preset="10,1">临界 ζ=1</button>
-          <button data-preset="10,1.8">过阻尼 ζ=1.8</button>
-          <button data-kick>重新冲击</button>
-          <label><input type="checkbox" data-compare> 对比 ease-out 曲线</label>
+          <p>只调两个参数——刚度 <code>ω</code> 和阻尼 <code>ζ</code>——就能得到从 Q 弹到稳重的全部质感。
+            而传统的 ease-out 曲线是时间的函数：中途改变目标，它只能生硬跳变；弹簧只要改
+            <code>target</code>，速度天然连续。</p>
+          <p>零第三方动画库：没有 framer-motion，没有 gsap。</p>
+        </div>
+        <div class="paper demo spring-stage">
+          <div class="spring-flex">
+            <svg class="ball-stage" viewBox="0 0 140 200" aria-label="弹簧小球">
+              <line class="target-line" x1="10" y1="20" x2="130" y2="20"></line>
+              <g class="spring-ball"><circle cx="0" cy="0" r="22"></circle></g>
+            </svg>
+            <svg class="graph-stage" viewBox="0 0 560 180" aria-label="位移-时间曲线">
+              <line class="axis" x1="0" y1="166" x2="560" y2="166"></line>
+              <line class="axis dashed" x1="0" y1="20" x2="560" y2="20"></line>
+              <path class="ease-curve" d=""></path>
+              <path class="spring-curve" d=""></path>
+            </svg>
+          </div>
+          <div class="controls col">
+            <label class="ctl-row">刚度 ω = <span class="mono omega-val">10.0</span>
+              <input type="range" data-omega min="2" max="24" step="0.5" value="10" aria-label="刚度 ω">
+            </label>
+            <label class="ctl-row">阻尼 ζ = <span class="mono zeta-val">1.00</span>
+              <input type="range" data-zeta min="0.05" max="2.5" step="0.05" value="1" aria-label="阻尼 ζ">
+            </label>
+            <div class="ctl-row">
+              <button data-preset="10,0.25">欠阻尼 ζ=0.25</button>
+              <button data-preset="10,1">临界 ζ=1</button>
+              <button data-preset="10,1.8">过阻尼 ζ=1.8</button>
+              <button data-kick>重新冲击</button>
+              <label><input type="checkbox" data-compare> 对比 ease-out 曲线</label>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  </div>
-</section>
+    </section>
 
-<!-- ============ 5. 弹簧用在哪 ============ -->
-<section class="section" id="sec-springs">
-  <div class="col-text">
-    <p class="sec-no">05</p>
-    <h2>弹簧用在哪：amount / swap / spin</h2>
-    <p>功能状态（thinking / waiting / alerting…）= <strong>身体缩小让位 + 程序化装饰图元</strong>。
-      装饰系统的全部手感来自三个并行弹簧，各回答一个问题：</p>
-    <ul class="checklist">
-      <li><strong>amount</strong>（ω=14）装饰模式在不在？0→1 入场：身体缩小、眼睛退场、clip 减速；1→0 退出</li>
-      <li><strong>swap</strong>（ω=11）装饰换人了没？kind 变化时归零重弹：旧装饰 ×(1−swap) 下场、
-        新装饰 ×swap 上场——交叉淡化，中间没有空态。它的静止值是 1，不是 0</li>
-      <li><strong>spin</strong>（ω=14）进场转个身：每次激活掷硬币选 ±π 并<strong>累加</strong>到目标；
-        退出时同方向再补 π——进场半圈 + 退出半圈 = 正好一整圈，不留残角</li>
-    </ul>
-    <p>三种切换各动不同的弹簧：<strong>idle→thinking</strong> 只有 amount 爬升（swap 已在 1）；
-      <strong>thinking→waiting</strong> 只有 swap 归零重弹（交叉淡化）；
-      <strong>thinking→idle</strong> 只有 amount 回落。点右边按钮，三条曲线是引擎里的
-      <strong>实时实测值</strong>（debugFrame），不是示意图。</p>
-  </div>
-  <div class="col-demo">
-    <div class="paper demo spr-stage">
-      <div class="stage"></div>
-      <div class="controls state-buttons"></div>
-      <div class="spr-graphs"></div>
-      <p class="hint">竖线 = 一次状态切换；虚线 = 弹簧当前目标值。spin 曲线按 ±π 卷绕显示，
-        读数框里是未卷绕的原始值（π 的倍数）。</p>
-    </div>
-  </div>
-</section>
-
-<!-- ============ 6. 球面上的眼睛 ============ -->
-<section class="section" id="sec-sphere">
-  <div class="col-text">
-    <p class="sec-no">06</p>
-    <h2>伪 3D：眼睛真的在球面上</h2>
-    <p>头部姿态是一组完整的旋转（原引擎用四元数存 pitch/yaw/roll）。眼睛不是贴在脸上的贴图：
-      眼睛脊线上的点经<strong>罗德里格斯公式（含 sinc）映到单位球面、随头部做 3D 旋转，再正交投影</strong>到屏幕；
-      转到背面的部分沿地平线弧裁掉——眼睛真的会绕到球后面消失。</p>
-    <p>靠近边缘的眼睛被球面几何<strong>自然压缩</strong>：逆向时实测远侧眼宽 ≈ 近侧的
-      <strong>0.69 倍</strong>，这正是球面深度系数，不是手调的 hack。</p>
-    <p>右边<strong>拖拽球体</strong>旋转头部。球面侧跑的就是原引擎同一套数学
-      （grok-player 导出的 <code>lb/ir/ST/xT</code> + <code>grok-recipes.json</code> 的眼球基向量与
-      neutral 眼睛描述符），宽度比实时算给你看。切换「平面贴眼」看看常见省事方案什么样：
-      眼睛等宽平移、滑出边缘也不消失——瞬间就假了。</p>
-  </div>
-  <div class="col-demo">
-    <div class="paper demo">
-      <svg class="sphere-canvas" viewBox="0 0 420 350" aria-label="球面眼睛演示（可拖拽）">
-        <circle class="sphere-outline" cx="210" cy="175" r="110"></circle>
-        <g class="wire"></g>
-        <path class="eye eye-l" d=""></path>
-        <path class="eye eye-r" d=""></path>
-      </svg>
-      <div class="controls">
-        <label><input type="checkbox" data-sphere-mode checked> <span class="sphere-mode-label">球面投影（Grok Bot 方案）</span></label>
-      </div>
-      <p class="width-ratio mono">转动头部，观察两只眼睛宽度比变化</p>
-    </div>
-  </div>
-</section>
-
-<!-- ============ 7. 眨眼与生命感 ============ -->
-<section class="section" id="sec-blink">
-  <div class="col-text">
-    <p class="sec-no">07</p>
-    <h2>眨眼与生命感</h2>
-    <p>眨眼不是独立调度器，而是<strong>写在 clip 里的关键帧事件</strong>：clip 的 expression 轨道上
-      一个 <code>v:"blink"</code> 事件会被编译器展开成三段 lids 关键帧——睁开 →
-      <strong>0.26×0.45 秒处完全闭合</strong> → 0.26 秒处重新睁开，缓动 <code>[.42,0,.58,1]</code>。
-      眼睑把眼睛纵向压扁成细 stadium（胶囊）。</p>
-    <p>除 clip 内嵌事件外，还有两个来源：命令式 <code>blink()</code> 调用（用户交互触发），
-      以及 through-blink 的表情切换（先闭眼再换表情睁开）。经逐行核对原 bundle：
-      <strong>不存在环境自动眨眼调度器</strong>——全 bundle 唯一的 <code>Math.random</code>
-      在网络重试退避里，与动画无关。「随机的外表」其实来自别处：idle 的 clip 洗牌（见下一节）。</p>
-    <p>右边是从提取数据 <code>grok-recipes.json</code> 直接画出的三条 idle clip 时间轴，
-      竖条 = 该 clip 内嵌的眨眼事件（Idle_D 里 2.07s 与 2.37s 那对就是一组双眨）。
-      上方是跑着真引擎的 bot；也可以点按钮手动触发一次 <code>blink()</code>。</p>
-  </div>
-  <div class="col-demo">
-    <div class="paper demo">
-      <div class="stage"></div>
-      <p class="mono clip-now">当前 clip：—</p>
-      <div class="controls">
-        <button data-blink-now>手动 blink()</button>
-      </div>
-      <div class="clip-timelines"></div>
-      <p class="hint">真实数据：grok-recipes.json 中 Idle_A / Idle_B / Idle_D 的 expression 轨道；
-        橙色 = 双眨（间隔 &lt;0.6s 的一对）</p>
-    </div>
-  </div>
-</section>
-
-<!-- ============ 8. 状态机与 recipe 洗牌 ============ -->
-<section class="section" id="sec-states">
-  <div class="col-text">
-    <p class="sec-no">08</p>
-    <h2>状态机与 recipe 洗牌</h2>
-    <p>原引擎的状态注册表有 <strong>53 个状态</strong>（idle / listening / thinking / blocked / finished /
-      waking…）。每个状态 = 若干条手工关键帧 <strong>recipe</strong>（position / rotation /
-      squash / lids / expression 轨道，每段独立三次贝塞尔缓动）。</p>
-    <p>idle 播放时<strong>种子化洗牌</strong>抽取下一条 clip、随机相位起播——所以待机永不重复。
-      <code>next + holdSeconds</code> 支持自动转移（如 blocked 持续 120 秒 → drowsy）；
-      尺寸小于 48px 时自动切换精简动画。</p>
-    <p>功能状态 = <strong>身体缩小让位 + 程序化装饰图元</strong>。右边从 53 个状态里选了 7 个代表：
-      idle / listening / thinking / waiting / alerting / working / finished——点哪个播哪个，
-      下方显示状态机当前真实播放的 clip。</p>
-    <p><strong>这些动画是原版引擎的忠实移植（grok-player）+ 从本机 app 提取的原版动画数据，
-      不再是简化重实现。</strong>idle 的 clip 池、洗牌与相位全部由移植引擎内的种子化 PRNG 驱动。</p>
-  </div>
-  <div class="col-demo">
-    <div class="paper demo state-demo">
-      <div class="stage"></div>
-      <div class="controls state-buttons"></div>
-      <p class="mono clip-now">正在播放：—</p>
-      <p class="mono clip-pool hint"></p>
-      <div class="switch-lab">
-        <p class="mono switch-title">切换解剖 —— 点上方任意按钮，看四条机制如何在 1.6 秒内接力：</p>
-        <svg class="switch-tl" viewBox="0 0 560 148" aria-label="状态切换时间线"></svg>
-        <p class="hint">bridge 与表情 morph 是有死线的贝塞尔，按真实时长填槽；amount / spin 是
-          debugFrame 实测的弹簧值。bridge 结束的那一帧就是状态机起播下一条 clip 的发令枪——
-          这正是它必须用贝塞尔、不能用（渐近的）弹簧的原因。</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ 9. 状态陈列馆 ============ -->
-<section class="section" id="sec-gallery">
-  <div class="col-text">
-    <p class="sec-no">09</p>
-    <h2>状态陈列馆：53 个状态一次看全</h2>
-    <p>原引擎的状态注册表一共 <strong>53 项</strong>，按用途分五组。下面每一张卡都是
-      <strong>正在运行的原版引擎实例</strong>（grok-player + 提取数据），不是截图、不是录屏。</p>
-    <p>注意一个事实：53 个状态，底层只有 <strong>28 条 clip</strong>。状态不是 53 段手绘动画，
-      而是 <strong>clip 池 × 表情（face）× morph 装饰</strong> 的组合——reading / working /
-      coding / running / computing / controlling 六个状态共用同一组 Working clip，
-      表现力全靠组合撑开。</p>
-    <p>点任意卡片可以戳它一下（poke）。带 <code>next</code> 的状态会真的自动转移：
-      waking 播 1.6 秒自己变回 idle；blocked 则要撑满 120 秒才进入 drowsy——
-      这张卡你等不到，但机制就在数据里。</p>
-  </div>
-  <div class="col-demo wide">
-    <div class="paper demo">
-      <div class="gallery-tabs"></div>
-      <div class="gallery-grid"></div>
-      <p class="hint">53 个引擎实例同页运行；离屏与被过滤的卡片由引擎内置
-        IntersectionObserver 自动休眠，不耗 CPU。</p>
-    </div>
-  </div>
-</section>
-
-<!-- ============ 10. 横向对比 ============ -->
-<section class="section" id="sec-compare">
-  <div class="col-text">
-    <p class="sec-no">10</p>
-    <h2>横向对比：为什么选程序化 SVG</h2>
-    <p>Grok Bot 的头像需要：随时响应视线的眼睛、53 个状态、任意尺寸渲染、离线可用。
-      在这四个约束下，素材型方案全部出局——剩下的就是代码。</p>
-  </div>
-  <div class="col-demo wide">
-    <div class="paper demo">
-      <table class="cmp-table">
-        <thead>
-          <tr><th></th><th>程序化 SVG<br><small>Grok Bot</small></th><th>Lottie</th><th>视频 / GIF</th><th>WebGL shader</th><th>CSS 动画</th></tr>
-        </thead>
-        <tbody>
-          <tr><th>素材体积</th><td class="good">0 字节（代码即素材）</td><td class="mid">json 几十~几百 KB</td><td class="bad">数百 KB~MB 级</td><td class="mid">shader 小但需运行环境</td><td class="good">0 字节</td></tr>
-          <tr><th>实时交互（视线跟随 / 状态机）</th><td class="good">每帧重算，天然支持</td><td class="bad">播放固定时间轴</td><td class="bad">完全不可能</td><td class="good">可以</td><td class="mid">有限（keyframes 固定）</td></tr>
-          <tr><th>分辨率无关</th><td class="good">矢量，任意缩放</td><td class="good">矢量</td><td class="bad">像素，放大即糊</td><td class="good">可做到</td><td class="good">矢量</td></tr>
-          <tr><th>运行时代码量</th><td class="mid">一个引擎 JS 文件</td><td class="bad">需 lottie-web 运行时</td><td class="good">&lt;img&gt; 即可</td><td class="bad">WebGL 上下文 + shader 编译</td><td class="good">0</td></tr>
-          <tr><th>跨端可移植性</th><td class="good">任何支持 SVG 的环境</td><td class="mid">各端需对应 player</td><td class="good">哪里都能播</td><td class="mid">依赖 GPU/WebGL</td><td class="mid">仅 Web/浏览器</td></tr>
-          <tr><th>离线 / 无 GPU 可用</th><td class="good">纯 CPU 矢量运算</td><td class="good">可以</td><td class="good">可以</td><td class="bad">无 GPU 即死</td><td class="good">可以</td></tr>
-        </tbody>
-      </table>
-
-      <div class="wizard">
-        <h3>我该选哪种？</h3>
-        <div class="wizard-step">
-          <p>你的角色需要<strong>实时交互</strong>吗？（视线跟随、状态机、对用户输入做反应）</p>
-          <button data-answer="yes">需要</button>
-          <button data-answer="no">不需要</button>
+    <!-- ============ 5. 弹簧用在哪 ============ -->
+    <section id="sec-springs" class="reveal">
+      <div class="duo duo--start">
+        <div>
+          <h2>弹簧用在哪：amount / swap / spin</h2>
+          <p>功能状态（thinking / waiting / alerting…）= <strong>身体缩小让位 + 程序化装饰图元</strong>。
+            装饰系统的全部手感来自三个并行弹簧，各回答一个问题：</p>
+          <ul class="checklist">
+            <li><strong>amount</strong>（ω=14）装饰模式在不在？0→1 入场：身体缩小、眼睛退场、clip 减速；1→0 退出</li>
+            <li><strong>swap</strong>（ω=11）装饰换人了没？kind 变化时归零重弹：旧装饰 ×(1−swap) 下场、
+              新装饰 ×swap 上场——交叉淡化，中间没有空态。它的静止值是 1，不是 0</li>
+            <li><strong>spin</strong>（ω=14）进场转个身：每次激活掷硬币选 ±π 并<strong>累加</strong>到目标；
+              退出时同方向再补 π——进场半圈 + 退出半圈 = 正好一整圈，不留残角</li>
+          </ul>
+          <p>三种切换各动不同的弹簧：<strong>idle→thinking</strong> 只有 amount 爬升（swap 已在 1）；
+            <strong>thinking→waiting</strong> 只有 swap 归零重弹（交叉淡化）；
+            <strong>thinking→idle</strong> 只有 amount 回落。点右边按钮，三条曲线是引擎里的
+            <strong>实时实测值</strong>（debugFrame），不是示意图。</p>
         </div>
-        <div class="wizard-step" hidden>
-          <p>能接受<strong>大体积素材</strong>、且内容一旦导成就不可逐帧程序化修改吗？</p>
-          <button data-answer="yes">能接受</button>
-          <button data-answer="no">不能</button>
-        </div>
-        <div class="wizard-step" hidden>
-          <p>目标环境能保证 <strong>GPU / 现代浏览器能力</strong>吗？</p>
-          <button data-answer="yes">能</button>
-          <button data-answer="no">不能/不确定</button>
-        </div>
-        <div class="wizard-result" hidden>
-          <p class="verdict"></p>
-          <button data-wizard-reset>重新选择</button>
+        <div class="paper demo spr-stage">
+          <div class="stage"></div>
+          <div class="controls state-buttons"></div>
+          <div class="spr-graphs"></div>
+          <p class="hint">竖线 = 一次状态切换；虚线 = 弹簧当前目标值。spin 曲线按 ±π 卷绕显示，
+            读数框里是未卷绕的原始值（π 的倍数）。</p>
         </div>
       </div>
-    </div>
-  </div>
-</section>
+    </section>
 
-<!-- ============ 11. 结尾 ============ -->
-<section class="section" id="sec-end">
-  <div class="col-text">
-    <p class="sec-no">11</p>
-    <h2>看不见的工程细节</h2>
-    <p>动画引擎（以及本页的移植封装）的高级感，一半来自这些没人注意的角落：</p>
-    <ul class="checklist">
-      <li><code>requestAnimationFrame</code> 驱动，60fps 上限节流</li>
-      <li><code>document.hidden</code> 时暂停整个循环</li>
-      <li><code>IntersectionObserver</code> 离屏停帧——看不见的 bot 不耗 CPU</li>
-      <li>动画静止后自动休眠，事件到来再唤醒</li>
-      <li><code>prefers-reduced-motion</code> 时完全静态</li>
-      <li>DOM diff 写入器：结构不变只写 attribute，变了才重建节点</li>
-      <li>尺寸 &lt; 48px 自动切精简动画</li>
-    </ul>
-    <p class="footnote">本页面自身就是这套哲学的实践：<strong>0 第三方运行时依赖、0 构建</strong>，
-      纯 HTML + CSS + 原生 ES modules；hero 与 01/03/05/07/08 节的 bot 运行原版引擎的移植
-      （<code>js/vendor/grok-player.js</code>）与从本机 app 提取的动画数据
-      （<code>js/vendor/grok-recipes.json</code>），其余 demo 实时计算，
-      全部遵守离屏休眠与 reduced-motion。<br>
-      文中全部结论来自对 Grok Bot（Electron, macOS）app.asar 解包后的逆向分析；
-      动画设计与数据版权归原所有者，仅供学习研究。</p>
-  </div>
-</section>
+    <!-- ============ 6. 球面上的眼睛 ============ -->
+    <section id="sec-sphere" class="reveal">
+      <div class="duo duo--start">
+        <div>
+          <h2>伪 3D：眼睛真的在球面上</h2>
+          <p>头部姿态是一组完整的旋转（原引擎用四元数存 pitch/yaw/roll）。眼睛不是贴在脸上的贴图：
+            眼睛脊线上的点经<strong>罗德里格斯公式（含 sinc）映到单位球面、随头部做 3D 旋转，再正交投影</strong>到屏幕；
+            转到背面的部分沿地平线弧裁掉——眼睛真的会绕到球后面消失。</p>
+          <p>靠近边缘的眼睛被球面几何<strong>自然压缩</strong>：逆向时实测远侧眼宽 ≈ 近侧的
+            <strong>0.69 倍</strong>，这正是球面深度系数，不是手调的 hack。</p>
+          <p>右边<strong>拖拽球体</strong>旋转头部。球面侧跑的就是原引擎同一套数学
+            （grok-player 导出的 <code>lb/ir/ST/xT</code> + <code>grok-recipes.json</code> 的眼球基向量与
+            neutral 眼睛描述符），宽度比实时算给你看。切换「平面贴眼」看看常见省事方案什么样：
+            眼睛等宽平移、滑出边缘也不消失——瞬间就假了。</p>
+        </div>
+        <div class="paper demo">
+          <svg class="sphere-canvas" viewBox="0 0 420 350" aria-label="球面眼睛演示（可拖拽）">
+            <circle class="sphere-outline" cx="210" cy="175" r="110"></circle>
+            <g class="wire"></g>
+            <path class="eye eye-l" d=""></path>
+            <path class="eye eye-r" d=""></path>
+          </svg>
+          <div class="controls">
+            <label><input type="checkbox" data-sphere-mode checked> <span class="sphere-mode-label">球面投影（Grok Bot 方案）</span></label>
+          </div>
+          <p class="width-ratio mono">转动头部，观察两只眼睛宽度比变化</p>
+        </div>
+      </div>
+    </section>
 
-</main>
+    <!-- ============ 7. 眨眼与生命感 ============ -->
+    <section id="sec-blink" class="reveal">
+      <div class="duo duo--start">
+        <div>
+          <h2>眨眼与生命感</h2>
+          <p>眨眼不是独立调度器，而是<strong>写在 clip 里的关键帧事件</strong>：clip 的 expression 轨道上
+            一个 <code>v:"blink"</code> 事件会被编译器展开成三段 lids 关键帧——睁开 →
+            <strong>0.26×0.45 秒处完全闭合</strong> → 0.26 秒处重新睁开，缓动 <code>[.42,0,.58,1]</code>。
+            眼睑把眼睛纵向压扁成细 stadium（胶囊）。</p>
+          <p>除 clip 内嵌事件外，还有两个来源：命令式 <code>blink()</code> 调用（用户交互触发），
+            以及 through-blink 的表情切换（先闭眼再换表情睁开）。经逐行核对原 bundle：
+            <strong>不存在环境自动眨眼调度器</strong>——全 bundle 唯一的 <code>Math.random</code>
+            在网络重试退避里，与动画无关。「随机的外表」其实来自别处：idle 的 clip 洗牌（见下一节）。</p>
+          <p>右边是从提取数据 <code>grok-recipes.json</code> 直接画出的三条 idle clip 时间轴，
+            竖条 = 该 clip 内嵌的眨眼事件（Idle_D 里 2.07s 与 2.37s 那对就是一组双眨）。
+            上方是跑着真引擎的 bot；也可以点按钮手动触发一次 <code>blink()</code>。</p>
+        </div>
+        <div class="paper demo">
+          <div class="stage"></div>
+          <p class="mono clip-now">当前 clip：—</p>
+          <div class="controls">
+            <button data-blink-now>手动 blink()</button>
+          </div>
+          <div class="clip-timelines"></div>
+          <p class="hint">真实数据：grok-recipes.json 中 Idle_A / Idle_B / Idle_D 的 expression 轨道；
+            橙色 = 双眨（间隔 &lt;0.6s 的一对）</p>
+        </div>
+      </div>
+    </section>
 
-<footer class="footer">
-  <p>Grok Bot 头像解剖 · 逆向工程笔记 · 本页所有动画均为程序化生成 · <a href="editor.html">动画编辑器 →</a></p>
-</footer>
+    <!-- ============ 8. 状态机与 recipe 洗牌 ============ -->
+    <section id="sec-states" class="reveal">
+      <div class="duo duo--start">
+        <div>
+          <h2>状态机与 recipe 洗牌</h2>
+          <p>原引擎的状态注册表有 <strong>53 个状态</strong>（idle / listening / thinking / blocked / finished /
+            waking…）。每个状态 = 若干条手工关键帧 <strong>recipe</strong>（position / rotation /
+            squash / lids / expression 轨道，每段独立三次贝塞尔缓动）。</p>
+          <p>idle 播放时<strong>种子化洗牌</strong>抽取下一条 clip、随机相位起播——所以待机永不重复。
+            <code>next + holdSeconds</code> 支持自动转移（如 blocked 持续 120 秒 → drowsy）；
+            尺寸小于 48px 时自动切换精简动画。</p>
+          <p>功能状态 = <strong>身体缩小让位 + 程序化装饰图元</strong>。右边从 53 个状态里选了 7 个代表：
+            idle / listening / thinking / waiting / alerting / working / finished——点哪个播哪个，
+            下方显示状态机当前真实播放的 clip。</p>
+          <p><strong>这些动画是原版引擎的忠实移植（grok-player）+ 从本机 app 提取的原版动画数据，
+            不再是简化重实现。</strong>idle 的 clip 池、洗牌与相位全部由移植引擎内的种子化 PRNG 驱动。</p>
+        </div>
+        <div class="paper demo state-demo">
+          <div class="stage"></div>
+          <div class="controls state-buttons"></div>
+          <p class="mono clip-now">正在播放：—</p>
+          <p class="mono clip-pool hint"></p>
+          <div class="switch-lab">
+            <p class="mono switch-title">切换解剖 —— 点上方任意按钮，看四条机制如何在 1.6 秒内接力：</p>
+            <svg class="switch-tl" viewBox="0 0 560 148" aria-label="状态切换时间线"></svg>
+            <p class="hint">bridge 与表情 morph 是有死线的贝塞尔，按真实时长填槽；amount / spin 是
+              debugFrame 实测的弹簧值。bridge 结束的那一帧就是状态机起播下一条 clip 的发令枪——
+              这正是它必须用贝塞尔、不能用（渐近的）弹簧的原因。</p>
+          </div>
+        </div>
+      </div>
+    </section>
 
-<script type="module" src="js/main.js?v=3"></script>
+    <!-- ============ 9. 状态陈列馆 ============ -->
+    <section id="sec-gallery" class="reveal">
+      <h2>状态陈列馆：53 个状态一次看全</h2>
+      <p>原引擎的状态注册表一共 <strong>53 项</strong>，按用途分五组。下面每一张卡都是
+        <strong>正在运行的原版引擎实例</strong>（grok-player + 提取数据），不是截图、不是录屏。</p>
+      <p>注意一个事实：53 个状态，底层只有 <strong>28 条 clip</strong>。状态不是 53 段手绘动画，
+        而是 <strong>clip 池 × 表情（face）× morph 装饰</strong> 的组合——reading / working /
+        coding / running / computing / controlling 六个状态共用同一组 Working clip，
+        表现力全靠组合撑开。</p>
+      <p>点任意卡片可以戳它一下（poke）。带 <code>next</code> 的状态会真的自动转移：
+        waking 播 1.6 秒自己变回 idle；blocked 则要撑满 120 秒才进入 drowsy——
+        这张卡你等不到，但机制就在数据里。</p>
+
+      <div class="paper demo">
+        <div class="gallery-tabs"></div>
+        <div class="gallery-grid"></div>
+        <p class="hint">53 个引擎实例同页运行；离屏与被过滤的卡片由引擎内置
+          IntersectionObserver 自动休眠，不耗 CPU。</p>
+      </div>
+    </section>
+
+    <!-- ============ 10. 横向对比 ============ -->
+    <section id="sec-compare" class="reveal">
+      <h2>横向对比：为什么选程序化 SVG</h2>
+      <p>Grok Bot 的头像需要：随时响应视线的眼睛、53 个状态、任意尺寸渲染、离线可用。
+        在这四个约束下，素材型方案全部出局——剩下的就是代码。</p>
+
+      <div class="paper demo">
+        <table class="cmp-table">
+          <thead>
+            <tr><th></th><th>程序化 SVG<br><small>Grok Bot</small></th><th>Lottie</th><th>视频 / GIF</th><th>WebGL shader</th><th>CSS 动画</th></tr>
+          </thead>
+          <tbody>
+            <tr><th>素材体积</th><td class="good">0 字节（代码即素材）</td><td class="mid">json 几十~几百 KB</td><td class="bad">数百 KB~MB 级</td><td class="mid">shader 小但需运行环境</td><td class="good">0 字节</td></tr>
+            <tr><th>实时交互（视线跟随 / 状态机）</th><td class="good">每帧重算，天然支持</td><td class="bad">播放固定时间轴</td><td class="bad">完全不可能</td><td class="good">可以</td><td class="mid">有限（keyframes 固定）</td></tr>
+            <tr><th>分辨率无关</th><td class="good">矢量，任意缩放</td><td class="good">矢量</td><td class="bad">像素，放大即糊</td><td class="good">可做到</td><td class="good">矢量</td></tr>
+            <tr><th>运行时代码量</th><td class="mid">一个引擎 JS 文件</td><td class="bad">需 lottie-web 运行时</td><td class="good">&lt;img&gt; 即可</td><td class="bad">WebGL 上下文 + shader 编译</td><td class="good">0</td></tr>
+            <tr><th>跨端可移植性</th><td class="good">任何支持 SVG 的环境</td><td class="mid">各端需对应 player</td><td class="good">哪里都能播</td><td class="mid">依赖 GPU/WebGL</td><td class="mid">仅 Web/浏览器</td></tr>
+            <tr><th>离线 / 无 GPU 可用</th><td class="good">纯 CPU 矢量运算</td><td class="good">可以</td><td class="good">可以</td><td class="bad">无 GPU 即死</td><td class="good">可以</td></tr>
+          </tbody>
+        </table>
+
+        <div class="wizard">
+          <h3>我该选哪种？</h3>
+          <div class="wizard-step">
+            <p>你的角色需要<strong>实时交互</strong>吗？（视线跟随、状态机、对用户输入做反应）</p>
+            <button data-answer="yes">需要</button>
+            <button data-answer="no">不需要</button>
+          </div>
+          <div class="wizard-step" hidden>
+            <p>能接受<strong>大体积素材</strong>、且内容一旦导成就不可逐帧程序化修改吗？</p>
+            <button data-answer="yes">能接受</button>
+            <button data-answer="no">不能</button>
+          </div>
+          <div class="wizard-step" hidden>
+            <p>目标环境能保证 <strong>GPU / 现代浏览器能力</strong>吗？</p>
+            <button data-answer="yes">能</button>
+            <button data-answer="no">不能/不确定</button>
+          </div>
+          <div class="wizard-result" hidden>
+            <p class="verdict"></p>
+            <button data-wizard-reset>重新选择</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 11. 结尾 ============ -->
+    <section id="sec-end" class="reveal">
+      <h2>看不见的工程细节</h2>
+      <p>动画引擎（以及本页的移植封装）的高级感，一半来自这些没人注意的角落：</p>
+      <ul class="checklist">
+        <li><code>requestAnimationFrame</code> 驱动，60fps 上限节流</li>
+        <li><code>document.hidden</code> 时暂停整个循环</li>
+        <li><code>IntersectionObserver</code> 离屏停帧——看不见的 bot 不耗 CPU</li>
+        <li>动画静止后自动休眠，事件到来再唤醒</li>
+        <li><code>prefers-reduced-motion</code> 时完全静态</li>
+        <li>DOM diff 写入器：结构不变只写 attribute，变了才重建节点</li>
+        <li>尺寸 &lt; 48px 自动切精简动画</li>
+      </ul>
+      <p class="footnote">本页面自身就是这套哲学的实践：<strong>0 第三方运行时依赖、0 构建</strong>，
+        纯 HTML + CSS + 原生 ES modules；hero 与 01/03/05/07/08 节的 bot 运行原版引擎的移植
+        （<code>js/vendor/grok-player.js</code>）与从本机 app 提取的动画数据
+        （<code>js/vendor/grok-recipes.json</code>），其余 demo 实时计算，
+        全部遵守离屏休眠与 reduced-motion。<br>
+        文中全部结论来自对 Grok Bot（Electron, macOS）app.asar 解包后的逆向分析；
+        动画设计与数据版权归原所有者，仅供学习研究。</p>
+    </section>
+
+    <footer class="footer">
+      <p>Grok Bot 头像解剖 · 逆向工程笔记 · 本页所有动画均为程序化生成 ·
+        <a href="editor.html">动画编辑器 →</a></p>
+    </footer>
+
+  </main>
+
+  <nav class="toc" aria-label="本页导航">
+    <p class="toc__label">本页导航</p>
+    <a href="#sec-svg">程序化 SVG</a>
+    <a href="#sec-morph">形状 morph</a>
+    <a href="#sec-clip">贝塞尔 clip</a>
+    <a href="#sec-spring">弹簧</a>
+    <a href="#sec-springs">弹簧分工</a>
+    <a href="#sec-sphere">伪 3D 眼睛</a>
+    <a href="#sec-blink">眨眼</a>
+    <a href="#sec-states">状态机</a>
+    <a href="#sec-gallery">状态陈列馆</a>
+    <a href="#sec-compare">横向对比</a>
+    <a href="#sec-end">工程细节</a>
+  </nav>
+
+</div>
+
+<script type="module" src="design-system/shell.js"></script>
+<script type="module" src="js/main.js"></script>
 </body>
 </html>

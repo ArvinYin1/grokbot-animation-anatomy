@@ -50,7 +50,11 @@ python3 -m http.server 8000
 ## 仓库结构
 
 - `index.html` + `js/sections/` — 解析长页，每节一个 ES module
+- `shapes.html` — 形状系统解剖
+- `workshop.html` — 形状工作台（新增形状指南 + 交互工作台）
 - `editor.html` + `js/editor.js` — 动画编辑器
+- `glow.html` + `js/glow.js` — Glow Lab：伪 3D 光泽来自 fill，而非几何
+- `design-system/` — 全站设计 token、组件、共享骨架与各页私有样式（零构建，手写）
 - `js/vendor/grok-player.js` — 原版引擎的逐行移植（浏览器 ESM，0 依赖）
 - `js/vendor/grok-recipes.json` — 从本机 app 提取的动画数据：28 条 clip、53 个状态、9 个表情、25 种形状、全部常量
 - `tools/verify-frame.mjs` — 移植版与原引擎的逐帧数值回归

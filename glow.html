@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>document.documentElement.dataset.theme = localStorage.getItem('gb-theme') || 'dark';</script>
+<title>Glow Lab —— GrokBot 解剖</title>
+<meta name="description" content="Grok Bot 头像的「3D 光泽」其实来自 fill 参数：同一个几何体、同一冻结帧，只改 opts.glow —— 纯色 / 49 段径向渐变 / halo 光环 / halo 呼吸，四面板对照实验。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="design-system/tokens.css">
+<link rel="stylesheet" href="design-system/components.css">
+<link rel="stylesheet" href="design-system/site.css">
+<link rel="stylesheet" href="design-system/page-glow.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="topbar__brand" href="index.html">
+    <span class="topbar__mark"></span>
+    GrokBot 解剖
+  </a>
+  <div class="topbar__end">
+    <button class="icon-btn" data-theme-toggle title="切换主题" aria-label="切换主题">
+      <svg data-icon-moon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/></svg>
+      <svg data-icon-sun viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="display:none"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    </button>
+  </div>
+</header>
+
+<div class="shell shell--tool">
+
+  <aside class="sidebar">
+    <div class="sidebar__group">
+      <p class="sidebar__label">解析</p>
+      <a class="sidebar__item" href="index.html">总览</a>
+      <a class="sidebar__item" href="shapes.html">形状系统</a>
+    </div>
+    <div class="sidebar__group">
+      <p class="sidebar__label">工具</p>
+      <a class="sidebar__item" href="workshop.html">形状工作台</a>
+      <a class="sidebar__item" href="editor.html">动画编辑器</a>
+      <a class="sidebar__item" href="glow.html" aria-current="page">Glow Lab</a>
+    </div>
+  </aside>
+
+  <main class="content prose">
+
+    <div class="page-head">
+      <p class="page-head__eyebrow">工具 · Glow Lab</p>
+      <h1>头像的「3D 光泽」，其实只是一组 fill 参数</h1>
+      <p class="page-head__lede">
+        同一个引擎、同一个状态、同一个冻结帧 —— 四个面板的<strong>几何完全相同</strong>，
+        身体都是同一条 2D 椭圆 SVG 路径（<code>zr(rx, ry, 1)</code>，两段半圆弧）。
+        唯一变量是 <code>opts.glow</code>：纯色 fill、径向渐变、halo 光环、halo 呼吸。
+        换 fill 参数，「立体感」从无到有。
+      </p>
+    </div>
+
+    <section>
+      <div class="glow-grid">
+
+        <figure class="card glow-card">
+          <h3>纯色 fill（引擎默认）</h3>
+          <div class="demo paper">
+            <div class="stage" data-glow="flat"></div>
+          </div>
+          <p class="glow-params">glow: undefined → rc(theme) → Nr(ink) = #0a0a0c</p>
+        </figure>
+
+        <figure class="card glow-card">
+          <h3>径向渐变（球面光照）</h3>
+          <div class="demo paper">
+            <div class="stage" data-glow="gradient"></div>
+          </div>
+          <p class="glow-params">glow: { inner, mid, rim, halo: 0 } → TT() 49 stops</p>
+        </figure>
+
+        <figure class="card glow-card">
+          <h3>+ halo 光环（完整 glow 路径）</h3>
+          <div class="demo paper">
+            <div class="stage" data-glow="halo"></div>
+          </div>
+          <p class="glow-params">同上 + halo: 0.85 → evenodd 环，半径 ×1.055</p>
+        </figure>
+
+        <figure class="card glow-card">
+          <h3>halo 呼吸（动态 midT）</h3>
+          <div class="demo paper">
+            <div class="stage" data-glow="breath"></div>
+          </div>
+          <p class="glow-params">midT = 0.5 + 0.5·sin(t·1000/860)，周期 ≈5.4s</p>
+        </figure>
+
+      </div>
+
+      <p>第一张是<strong>线上真实默认</strong>：<code>setGlow()</code> 在整个 renderer bundle
+        里只有定义、没有调用点，body 的 fill 就是一个纯色 <code>#0a0a0c</code>。
+        第二张打开 <code>TT()</code>：49 个 stop（<code>offset = 1-(1-u/48)²</code>，边缘更密），
+        <code>AT()</code> 在 inner→mid→rim 之间做双 smoothstep，再乘边缘压暗
+        <code>0.9+0.1(1-t²)^0.225</code>，实测中心 <code>#f0f2ff</code> → 边缘 <code>#171c2e</code>。
+        第三张再加一圈半径 <code>×(1+0.055)</code> 的 evenodd 光环：12 个 stop（dd=11），rim 色，
+        opacity 从 halo 值向边缘递减 —— 边缘光。第四张是活的：runtime 每帧重写
+        <code>midT</code>，mid 色位置在球面上滚动 —— 这就是被读成「有光源在照」的原因。</p>
+
+      <div class="keynote">
+        <b>结论：</b>外形不是 3D 网格，是 <code>zr(rx, ry, 1)</code> —— 两段半圆弧拼成的 SVG 椭圆。
+        立体感 100% 来自 <code>body</code> 的 <b>fill</b>：一个 49 段径向渐变 +
+        一圈半径 ×1.055 的 evenodd 光环。真正的球面数学只用在<b>眼睛</b>上
+        （罗德里格斯旋转 + 前半球裁剪 + 正交投影）。
+      </div>
+    </section>
+
+    <footer class="footer">
+      <p>GrokBot 解剖 · 逆向工程笔记 · 本页所有图形均为程序化生成 ·
+        <a href="shapes.html">形状系统 →</a></p>
+    </footer>
+
+  </main>
+
+</div>
+
+<script type="module" src="design-system/shell.js"></script>
+<script type="module" src="js/glow.js"></script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+/* editor.html 页面级微调（叠加在 site.css 之后） */
+.page-head--compact {
+  margin-bottom: 20px;
+}
+.page-head--compact .page-head__lede {
+  margin-top: 8px;
+}
+/* page-head 已提供上间距，去掉 .editor2 自身的顶部 padding */
+.editor2 {
+  padding-top: 0;
+}

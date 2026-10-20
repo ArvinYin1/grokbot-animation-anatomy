@@ -1,0 +1,19 @@
+/* ============================================================
+   page-index.css — 总览页（index.html）专用布局
+   依赖 tokens.css + components.css + site.css（在其后引入）。
+   ============================================================ */
+
+/* 双栏：左文右演示（hero 与各正文节共用） */
+.duo {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: 40px;
+  align-items: center;
+}
+.duo--start { align-items: start; }
+.duo > * { min-width: 0; }
+.duo > .page-head { margin-bottom: 0; }
+
+@media (max-width: 860px) {
+  .duo { grid-template-columns: 1fr; }
+}
