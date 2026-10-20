@@ -1024,13 +1024,17 @@ function zM(e, t) { // zM：反转子环
     r = t.map((o, s) => o.kind === "line" ? { kind: "line", to: n[s] } : { ...o, to: n[s], sweep: -o.sweep }).reverse();
   return { from: n[n.length - 1], to: e, segments: r };
 }
-function DM(e, t, n) { // DM：身体椭圆上的补弧
+function DM(e, t, n, k) { // DM：身体椭圆上的补弧（方向必须与眼链对咬：h.to → h.from）
   const r = n.map(s => ({ point: s, angle: Dr(Math.atan2(s[1], s[0])) })).sort((s, i) => s.angle - i.angle), o = [];
   for (let s = 0; s < r.length; s++) {
     const i = r[s], a = r[(s + 1) % r.length], c = s + 1 < r.length ? a.angle - i.angle : a.angle + TAU - i.angle;
     if (c <= 0) continue;
     const u = i.angle + c / 2;
-    t.reduce((l, d) => l + jM(d, u), 0) === 0 && o.push({ from: i.point, to: a.point, segments: [{ kind: "arc", to: a.point, radii: e, sweep: c }] });
+    if (t.reduce((l, d) => l + jM(d, u), 0) !== 0) continue;
+    // 升序起点是眼弧 from（负 sweep 眼弧会这样）时反向发射，否则 qM 接不成环 → 闪白
+    k && !k.has(`${i.point[0]} ${i.point[1]}`) && k.has(`${a.point[0]} ${a.point[1]}`)
+      ? o.push({ from: a.point, to: i.point, segments: [{ kind: "arc", to: i.point, radii: e, sweep: -c }] })
+      : o.push({ from: i.point, to: a.point, segments: [{ kind: "arc", to: a.point, radii: e, sweep: c }] });
   }
   return o;
 }
@@ -1051,17 +1055,17 @@ function qM(e) { // qM：链式拼接子环
   return o;
 }
 function OM(e, t) { // OM：身体轮廓抠掉眼睛
-  const n = a => a.kind === "arc" && a.radii[0] === e[0] && a.radii[1] === e[1], r = [], o = [], s = [], i = [];
+  const n = a => a.kind === "arc" && a.radii[0] === e[0] && a.radii[1] === e[1], r = [], o = [], s = [], i = [], k = new Set;
   for (const a of t) {
     const c = a.findIndex(n);
     if (c < 0) { r.push(a); continue; }
     let u = a[c].to, l = [], d = u;
     for (let f = 1; f <= a.length; f++) {
       const h = a[(c + f) % a.length];
-      n(h) ? (s.push({ from: d, sweep: h.sweep }), i.push(d, h.to), l.length > 0 && o.push(zM(u, l)), l = [], u = h.to) : l.push(h), d = h.to;
+      n(h) ? (s.push({ from: d, sweep: h.sweep }), i.push(d, h.to), k.add(`${h.to[0]} ${h.to[1]}`), l.length > 0 && o.push(zM(u, l)), l = [], u = h.to) : l.push(h), d = h.to;
     }
   }
-  return s.length === 0 ? [zr(e, 1), ...r] : [...qM([...o, ...DM(e, s, i)]), ...r];
+  return s.length === 0 ? [zr(e, 1), ...r] : [...qM([...o, ...DM(e, s, i, k)]), ...r];
 }
 // —— path 序列化（ha/pa，kT=π/48 弧细分由调用方 xT 处理或 pa 按 _h 劈开） ——
 const _h = Math.PI * .999;
