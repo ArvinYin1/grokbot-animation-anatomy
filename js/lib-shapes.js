@@ -258,11 +258,23 @@ export function ptsOf(d) {
 export const hasArc = (d) => /[Aa]/.test(d);
 
 // ---------- 把一个 svg 按第一个 path 的 bbox 归一（便于缩放展示） ----------
+// 展示路径都是折线（无圆弧命令），用 ptsOf 纯文本解析求包围盒，不触发布局；
+// 带圆弧的路径（仅 blob，不出现在展示区）回退到 samplePath 采样。
+// 注意：不要直接把它传给 forEach —— 回调第二参数 index 会被当成 pad。
 export function fitViewBox(svg, pad = 1.06) {
   const p = svg.querySelector('path');
   if (!p) return;
-  const b = p.getBBox();
-  const m = Math.max(b.width, b.height) * pad || 1;
+  const d = p.getAttribute('d');
+  const pts = hasArc(d) ? samplePath(d, 360) : ptsOf(d);
+  if (!pts.length) return;
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const [x, y] of pts) {
+    if (x < x0) x0 = x;
+    if (y < y0) y0 = y;
+    if (x > x1) x1 = x;
+    if (y > y1) y1 = y;
+  }
+  const m = Math.max(x1 - x0, y1 - y0) * pad || 1;
   svg.setAttribute('viewBox',
-    `${b.x + b.width / 2 - m / 2} ${b.y + b.height / 2 - m / 2} ${m} ${m}`);
+    `${(x0 + x1) / 2 - m / 2} ${(y0 + y1) / 2 - m / 2} ${m} ${m}`);
 }

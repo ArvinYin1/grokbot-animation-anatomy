@@ -220,7 +220,7 @@ function initRecon(root, byName) {
       </p>`;
     host.appendChild(card);
   }
-  host.querySelectorAll('svg[data-fit]').forEach(fitViewBox);
+  host.querySelectorAll('svg[data-fit]').forEach((svg) => fitViewBox(svg));
 
   // 汇总：所有形状的最佳对齐角都落在同一个窄区间 —— 那就是引擎的静止姿态倾斜。
   // 结论由页面实时算出来，不是写死的数字。

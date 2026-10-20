@@ -120,7 +120,7 @@ function initGallery(root, data) {
       </div>
     </div>`;
   }).join('');
-  host.querySelectorAll('svg[data-fit]').forEach(fitViewBox);
+  host.querySelectorAll('svg[data-fit]').forEach((svg) => fitViewBox(svg));
 
   // 三个分组里用到了 solid+balls（bean/tablet/capsule），单独说明
   const balls = data.shapes.filter((s) => s.silhouette === 'solid+balls').map((s) => s.name);
@@ -160,7 +160,7 @@ function initHull(root, data) {
         <div class="nm">${name}</div>
       </div>`;
     }).join('');
-    grid.querySelectorAll('svg[data-fit]').forEach(fitViewBox);
+    grid.querySelectorAll('svg[data-fit]').forEach((svg) => fitViewBox(svg));
 
     if (mode === 'hull') {
       note.textContent = '凸包之后的轮廓 —— 凹口全被填平';

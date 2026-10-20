@@ -54,7 +54,7 @@ function initSeats(root, data) {
       <span class="tag">${kindOf(s) ?? '—'}</span>
     </div>`;
   }).join('');
-  host.querySelectorAll('svg[data-fit]').forEach(fitViewBox);
+  host.querySelectorAll('svg[data-fit]').forEach((svg) => fitViewBox(svg));
 }
 
 // ---------- 08 速查表 ----------
