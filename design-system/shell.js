@@ -22,7 +22,7 @@ export function applyTheme(theme) {
 
 export function initTheme() {
   // data-theme 已在 <head> 的内联脚本里写入，这里只同步图标并接管后续切换
-  const theme = rootEl.dataset.theme || "dark";
+  const theme = rootEl.dataset.theme || "light";
   document.querySelectorAll("[data-icon-sun]").forEach(
     el => (el.style.display = theme === "dark" ? "none" : "")
   );

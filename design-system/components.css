@@ -84,7 +84,8 @@ pre {
   width: 20px;
   height: 20px;
   border-radius: 6px;
-  background: linear-gradient(135deg, var(--accent), #9b7bff);
+  background: #fff url("brand.svg") center / contain no-repeat;
+  border: 1px solid var(--border-strong);
   flex: none;
 }
 

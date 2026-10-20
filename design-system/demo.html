@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-theme="dark">
+<html lang="zh-CN" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -200,7 +200,7 @@ function apply(theme) {
   moon.style.display = theme === 'dark' ? '' : 'none';
   setTimeout(() => root.classList.remove('theme-anim'), 300);
 }
-apply(localStorage.getItem('gb-theme') || 'dark');
+apply(localStorage.getItem('gb-theme') || 'light');
 root.classList.remove('theme-anim');
 toggle.addEventListener('click', () => {
   const next = root.dataset.theme === 'dark' ? 'light' : 'dark';

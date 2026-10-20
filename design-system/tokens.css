@@ -1,6 +1,6 @@
 /* ============================================================
    GrokBot 解剖 · 设计 token 层
-   shadcn 风格命名约定，深色为主，[data-theme="light"] 切换浅色
+   shadcn 风格命名约定，浅色为默认，[data-theme="dark"] 切换深色
    全站唯一的颜色/字号/间距源头，页面不再定义私有变量
    ============================================================ */
 
@@ -25,7 +25,42 @@
   --radius: 10px;
   --radius-lg: 14px;
 
-  /* 深色主题（默认） */
+  /* 浅色主题（默认） */
+  --background: #ffffff;
+  --surface: #fafafa;
+  --surface-hover: #f4f4f5;
+  --muted: #f0f0f2;
+  --border: rgba(0, 0, 0, 0.08);
+  --border-strong: rgba(0, 0, 0, 0.14);
+
+  --foreground: #18181b;
+  --foreground-secondary: #52525b;
+  --foreground-tertiary: #a1a1aa;
+
+  --accent: #2e6bff;
+  --accent-foreground: #ffffff;
+  --accent-muted: rgba(46, 107, 255, 0.08);
+  --ring: rgba(46, 107, 255, 0.3);
+
+  --success: #1a9e6f;
+  --success-muted: rgba(26, 158, 111, 0.1);
+  --warning: #b57d2b;
+  --warning-muted: rgba(181, 125, 43, 0.1);
+  --danger: #d3454f;
+  --danger-muted: rgba(211, 69, 79, 0.08);
+
+  /* 代码语法色（浅色） */
+  --code-bg: #f7f7f8;
+  --tok-k: #9333ea; /* 关键字 */
+  --tok-f: #2563eb; /* 函数 */
+  --tok-s: #3d8a40; /* 字符串 */
+  --tok-n: #c2410c; /* 数字 */
+  --tok-c: #9ca3af; /* 注释 */
+
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
   --background: #0a0a0b;
   --surface: #111113;
   --surface-hover: #161619;
@@ -51,45 +86,11 @@
 
   /* 代码语法色（深色） */
   --code-bg: #0e0e11;
-  --tok-k: #c792ea; /* 关键字 */
-  --tok-f: #82aaff; /* 函数 */
-  --tok-s: #c3e88d; /* 字符串 */
-  --tok-n: #f78c6c; /* 数字 */
-  --tok-c: #546178; /* 注释 */
+  --tok-k: #c792ea;
+  --tok-f: #82aaff;
+  --tok-s: #c3e88d;
+  --tok-n: #f78c6c;
+  --tok-c: #546178;
 
   color-scheme: dark;
-}
-
-[data-theme="light"] {
-  --background: #ffffff;
-  --surface: #fafafa;
-  --surface-hover: #f4f4f5;
-  --muted: #f0f0f2;
-  --border: rgba(0, 0, 0, 0.08);
-  --border-strong: rgba(0, 0, 0, 0.14);
-
-  --foreground: #18181b;
-  --foreground-secondary: #52525b;
-  --foreground-tertiary: #a1a1aa;
-
-  --accent: #2e6bff;
-  --accent-foreground: #ffffff;
-  --accent-muted: rgba(46, 107, 255, 0.08);
-  --ring: rgba(46, 107, 255, 0.3);
-
-  --success: #1a9e6f;
-  --success-muted: rgba(26, 158, 111, 0.1);
-  --warning: #b57d2b;
-  --warning-muted: rgba(181, 125, 43, 0.1);
-  --danger: #d3454f;
-  --danger-muted: rgba(211, 69, 79, 0.08);
-
-  --code-bg: #f7f7f8;
-  --tok-k: #9333ea;
-  --tok-f: #2563eb;
-  --tok-s: #3d8a40;
-  --tok-n: #c2410c;
-  --tok-c: #9ca3af;
-
-  color-scheme: light;
 }
