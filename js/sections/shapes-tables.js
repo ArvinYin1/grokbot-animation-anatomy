@@ -1,17 +1,34 @@
 // 形状页 · 07 眼睛落座 seat + 08 速查表
 // 两节都由 shape-data.json 驱动，保证与其余版块同源。
 import { fitViewBox } from '../lib-shapes.js';
+import { t } from '../i18n/i18n.js';
 
 // seat 的 4 种 kind（来自 bundle 的描述符表）
 const SEATS = [
-  ['front', 'faceZ', '平面正脸，眼睛钉在一个固定深度',
+  ['front', 'faceZ', t('shapes.js.seats.frontWhat'),
     'squircle .28 · crystal .64·√3/2 · hex/square/house/sparkle/… .36'],
-  ['wrap', 'wrapR, wrapY0/1, radiusAt', '绕柱面包裹，眼睛跟着曲面滑动并被压缩',
+  ['wrap', 'wrapR, wrapY0/1, radiusAt', t('shapes.js.seats.wrapWhat'),
     'pebble · egg · gem · shield · dome · arch · leaf · cylinder · wedge · teardrop · bean · capsule'],
-  ['wrapX', 'radiusAtX', '沿 X 轴的柱面（横躺的柱）', 'tablet'],
-  ['loft', 'surfaceZ（Dv() 求）', '用 180 个方向射线求放样面的深度，眼睛贴鼓面',
+  ['wrapX', 'radiusAtX', t('shapes.js.seats.wrapXWhat'), 'tablet'],
+  ['loft', t('shapes.js.seats.loftField'), t('shapes.js.seats.loftWhat'),
     'cloud · heart'],
 ];
+
+// shape-data.json 的 gen/outline 字段是分析注记（中文）；英文模式下按短语替换
+const DATA_PHRASES = [
+  ['球体特例（弧线路径）', 'shapes.js.data.sphereSpecial'],
+  ['弧线路径（特例）', 'shapes.js.data.arcSpecial'],
+  ['六圆并集（非 Mv 表）', 'shapes.js.data.sixCircles'],
+  ['不在 Mv 表', 'shapes.js.data.notInMv'],
+  ['凸包 pi()', 'shapes.js.data.hullPi'],
+  ['环间四边形', 'shapes.js.data.ringQuads'],
+  ['射线并集（球链）', 'shapes.js.data.rayUnion'],
+  ['环缝合 eS()', 'shapes.js.data.ringStitch'],
+];
+const trData = (s) =>
+  typeof s === 'string'
+    ? DATA_PHRASES.reduce((out, [zh, key]) => out.replaceAll(zh, t(key)), s)
+    : s;
 
 export function init(root, data) {
   if (root.querySelector('.seat-tbl')) initSeats(root, data);
@@ -64,14 +81,14 @@ function initTable(root, data) {
     const loss = s.hullLoss;
     const badge = loss == null
       ? '<span class="pill opt">—</span>'
-      : `<span class="pill${s.concave ? ' cc' : ''}">${s.concave ? '凹' : '凸'}</span>`;
+      : `<span class="pill${s.concave ? ' cc' : ''}">${s.concave ? t('shapes.js.badge.concave') : t('shapes.js.badge.convex')}</span>`;
     const lossTxt = loss == null ? '—' : `${(loss * 100).toFixed(2)}%`;
     return `<tr>
       <td class="m">${s.name}</td>
       <td class="dim">${s.engine}</td>
-      <td class="gen">${s.gen}</td>
+      <td class="gen">${trData(s.gen)}</td>
       <td class="m">${s.silhouette}</td>
-      <td>${s.outline}</td>
+      <td>${trData(s.outline)}</td>
       <td class="dim">${s.seat}</td>
       <td class="dim">${s.size == null ? '—' : s.size.toFixed(3)}</td>
       <td>${badge}</td>
@@ -88,9 +105,6 @@ function initTable(root, data) {
     s.silhouette === 'solid' || s.silhouette === 'solid+balls');
 
   root.querySelector('.ref-verify').innerHTML =
-    `本页实测 ${data.shapeCount} 个轮廓：
-     <b>${solidFamily.length} 个 <code>solid</code> 家族里，凹的有 ${solidConcave.length} 个</b>；
-     全部 ${concaveAll.length} 个凹形状（<code>${concaveAll.map((s) => s.name).join(' / ')}</code>）
-     里，落在 <code>solid</code> 家族的有 ${concaveInSolid.length} 个。
-     换句话说 —— <b>凸包这条约束在 25 个形状上一个例外都没有</b>。`;
+    `${t('shapes.js.table.verify1')}${data.shapeCount}${t('shapes.js.table.verify2')}` +
+    `<b>${t('shapes.js.table.verify3a')}${solidFamily.length}${t('shapes.js.table.verify3b')}<code>solid</code>${t('shapes.js.table.verify3c')}${solidConcave.length}${t('shapes.js.table.verify3d')}</b>${t('shapes.js.table.verify4')}${concaveAll.length}${t('shapes.js.table.verify5')}<code>${concaveAll.map((s) => s.name).join(' / ')}</code>${t('shapes.js.table.verify6')}<code>solid</code>${t('shapes.js.table.verify7')}${concaveInSolid.length}${t('shapes.js.table.verify8')}<b>${t('shapes.js.table.verify9')}</b>${t('shapes.js.table.verify10')}`;
 }

@@ -258,7 +258,7 @@ pre.code {
 .cmp-table th, .cmp-table td { padding: 10px 12px; border-bottom: 1px solid #e6e6ee; text-align: left; vertical-align: top; }
 .cmp-table thead th { color: #333; font-size: 14px; }
 .cmp-table thead small { color: #999; font-weight: 400; }
-.cmp-table tbody th { color: #666; font-weight: 500; white-space: nowrap; }
+.cmp-table tbody th { color: #666; font-weight: 500; }
 .cmp-table td.good { background: #e8f6ec; color: #146c2e; }
 .cmp-table td.mid { background: #fdf6e3; color: #8a6d1a; }
 .cmp-table td.bad { background: #fdeaea; color: #a13232; }

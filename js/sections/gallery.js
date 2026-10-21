@@ -2,27 +2,50 @@
 // 数据只 fetch 一次，通过 opts.data 共享给全部实例；离屏/被过滤的卡片由引擎
 // 内置 IntersectionObserver 自动休眠。点击卡片 = poke('bounce')。
 import { createGrokBot } from '../vendor/grok-player.js';
+import { t } from '../i18n/i18n.js';
 
 const ZH = {
-  idle: '待机', listening: '聆听', thinking: '思考', streaming: '输出中', searching: '搜索中',
-  reading: '阅读中', working: '工作中', coding: '写代码', running: '运行中', computing: '计算中',
-  controlling: '控制中', waiting: '等待', blocked: '受阻', finished: '完成', failed: '失败',
-  sleeping: '睡眠', waking: '苏醒', happy: '开心', excited: '兴奋', laughing: '大笑',
-  proud: '得意', curious: '好奇', playful: '顽皮', shy: '害羞', surprised: '惊讶',
-  suspicious: '怀疑', angry: '生气', confused: '困惑', sad: '难过', drowsy: '困倦',
-  bored: '无聊', scared: '害怕', celebrate: '庆祝', approving: '认可', orbit: '轨道',
-  radar: '雷达', progress: '进度', spawning: '生成中', loading: '加载中', dictating: '听写',
-  sending: '发送中', receiving: '接收中', uploading: '上传中', writing: '书写中', alerting: '警报',
-  bouncing: '弹跳', 'powering-down': '关机中', humming: '哼歌', notifying: '通知',
-  dragging: '拖拽', logo: '标志', showcase: '展示', turntable: '转台',
+  idle: t('index.js.gallery.name.idle'), listening: t('index.js.gallery.name.listening'),
+  thinking: t('index.js.gallery.name.thinking'), streaming: t('index.js.gallery.name.streaming'),
+  searching: t('index.js.gallery.name.searching'), reading: t('index.js.gallery.name.reading'),
+  working: t('index.js.gallery.name.working'), coding: t('index.js.gallery.name.coding'),
+  running: t('index.js.gallery.name.running'), computing: t('index.js.gallery.name.computing'),
+  controlling: t('index.js.gallery.name.controlling'), waiting: t('index.js.gallery.name.waiting'),
+  blocked: t('index.js.gallery.name.blocked'), finished: t('index.js.gallery.name.finished'),
+  failed: t('index.js.gallery.name.failed'), sleeping: t('index.js.gallery.name.sleeping'),
+  waking: t('index.js.gallery.name.waking'), happy: t('index.js.gallery.name.happy'),
+  excited: t('index.js.gallery.name.excited'), laughing: t('index.js.gallery.name.laughing'),
+  proud: t('index.js.gallery.name.proud'), curious: t('index.js.gallery.name.curious'),
+  playful: t('index.js.gallery.name.playful'), shy: t('index.js.gallery.name.shy'),
+  surprised: t('index.js.gallery.name.surprised'), suspicious: t('index.js.gallery.name.suspicious'),
+  angry: t('index.js.gallery.name.angry'), confused: t('index.js.gallery.name.confused'),
+  sad: t('index.js.gallery.name.sad'), drowsy: t('index.js.gallery.name.drowsy'),
+  bored: t('index.js.gallery.name.bored'), scared: t('index.js.gallery.name.scared'),
+  celebrate: t('index.js.gallery.name.celebrate'), approving: t('index.js.gallery.name.approving'),
+  orbit: t('index.js.gallery.name.orbit'), radar: t('index.js.gallery.name.radar'),
+  progress: t('index.js.gallery.name.progress'), spawning: t('index.js.gallery.name.spawning'),
+  loading: t('index.js.gallery.name.loading'), dictating: t('index.js.gallery.name.dictating'),
+  sending: t('index.js.gallery.name.sending'), receiving: t('index.js.gallery.name.receiving'),
+  uploading: t('index.js.gallery.name.uploading'), writing: t('index.js.gallery.name.writing'),
+  alerting: t('index.js.gallery.name.alerting'), bouncing: t('index.js.gallery.name.bouncing'),
+  'powering-down': t('index.js.gallery.name.powering-down'), humming: t('index.js.gallery.name.humming'),
+  notifying: t('index.js.gallery.name.notifying'), dragging: t('index.js.gallery.name.dragging'),
+  logo: t('index.js.gallery.name.logo'), showcase: t('index.js.gallery.name.showcase'),
+  turntable: t('index.js.gallery.name.turntable'),
 };
-const GROUP_ZH = { Lifecycle: '生命周期', Reactions: '表情反应', Morphs: '变形装饰', Product: '产品', Brand: '品牌' };
+const GROUP_ZH = {
+  Lifecycle: t('index.js.gallery.group.lifecycle'),
+  Reactions: t('index.js.gallery.group.reactions'),
+  Morphs: t('index.js.gallery.group.morphs'),
+  Product: t('index.js.gallery.group.product'),
+  Brand: t('index.js.gallery.group.brand'),
+};
 const SIZE = 96;
 
 function tagsOf(def) {
   const tags = [];
-  if (def.face) tags.push(`表情 ${def.face}`);
-  if (def.morph) tags.push(`装饰 ${def.morph}`);
+  if (def.face) tags.push(`${t('index.js.gallery.tagFace')}${def.face}`);
+  if (def.morph) tags.push(`${t('index.js.gallery.tagMorph')}${def.morph}`);
   if (def.next) tags.push(`→ ${def.next}${def.holdSeconds ? ` ${def.holdSeconds}s` : ''}`);
   return tags.join(' · ');
 }
@@ -37,7 +60,7 @@ export function init(root) {
       const { states, lifecycleGroups } = recipes;
 
       // 分组 tab：全部 + 五个生命周期组
-      const groups = [['all', `全部 ${Object.keys(states).length}`],
+      const groups = [['all', `${t('index.js.gallery.all')} ${Object.keys(states).length}`],
         ...lifecycleGroups.map((g) => [g.label, `${GROUP_ZH[g.label] ?? g.label} ${g.states.length}`])];
       const buttons = groups.map(([key, label], i) => {
         const b = document.createElement('button');

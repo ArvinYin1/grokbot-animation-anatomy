@@ -5,6 +5,7 @@ import {
   CANVAS_CENTER as X, eh, uv, lv, av, tv, cv, El, th,
   samplePath, fitViewBox,
 } from '../lib-shapes.js';
+import { t } from '../i18n/i18n.js';
 
 // 实验室里可调的形状（每个都是 Mv 表里真实存在的一个函数）
 const LAB = {
@@ -12,71 +13,71 @@ const LAB = {
     label: 'hex 六边形',
     eq: (v) => `eh(114, ${v.count}, ${v.corner}, Math.PI/6)`,
     ctrls: [
-      ['count', '边数 count', 3, 12, 1, 6],
-      ['corner', '圆角 cornerR', 0, 60, 1, 20],
+      ['count', t('shapes.js.lab.ctrl.count'), 3, 12, 1, 6],
+      ['corner', t('shapes.js.lab.ctrl.cornerR'), 0, 60, 1, 20],
     ],
     gen: (v) => eh(114, v.count, v.corner, Math.PI / 6),
-    note: '正 n 边形 + 圆角。边数拉大就是圆。',
+    note: t('shapes.js.lab.note.hex'),
   },
   square: {
     label: 'square 正方形',
     eq: (v) => `uv(107, ${v.corner})`,
-    ctrls: [['corner', '圆角 cornerR', 0, 107, 1, 28]],
+    ctrls: [['corner', t('shapes.js.lab.ctrl.cornerR'), 0, 107, 1, 28]],
     gen: (v) => uv(107, v.corner),
-    note: '就是 4 个顶点的圆角多边形。',
+    note: t('shapes.js.lab.note.square'),
   },
   cloud: {
     label: 'cloud 云朵',
-    eq: (v) => `th([5 个圆])   // 半径 +${v.grow}`,
-    ctrls: [['grow', '各圆额外放大', 0, 26, 1, 0]],
+    eq: (v) => `th([${t('shapes.js.lab.eq.circles')}])   // ${t('shapes.js.lab.eq.radius')} +${v.grow}`,
+    ctrls: [['grow', t('shapes.js.lab.ctrl.grow'), 0, 26, 1, 0]],
     gen: (v) => th([
       [X - 62, X + 26, 56 + v.grow], [X + 62, X + 26, 54 + v.grow],
       [X, X + 34, 62 + v.grow], [X - 24, X - 30, 62 + v.grow],
       [X + 38, X - 26, 54 + v.grow],
     ]),
-    note: 'th = 圆并集轮廓：160 个方向求最远交点，再 Catmull-Rom 平滑。',
+    note: t('shapes.js.lab.note.cloud'),
   },
   squircle: {
     label: 'squircle 圆角方',
     eq: (v) => `El(107, 107, ${v.exp})`,
-    ctrls: [['exp', '超椭圆指数 n', 1, 8, 0.1, 3.2]],
+    ctrls: [['exp', t('shapes.js.lab.ctrl.exp'), 1, 8, 0.1, 3.2]],
     gen: (v) => El(107, 107, v.exp),
-    note: '超椭圆 |x/a|ⁿ+|y/b|ⁿ=1。n=2 椭圆，n↑ 越方。',
+    note: t('shapes.js.lab.note.squircle'),
   },
   gem: {
     label: 'gem 宝石',
     eq: (v) => `El(112, 113, ${v.exp})`,
-    ctrls: [['exp', '超椭圆指数 n', 1, 4, 0.05, 1.5]],
+    ctrls: [['exp', t('shapes.js.lab.ctrl.exp'), 1, 4, 0.05, 1.5]],
     gen: (v) => El(112, 113, v.exp),
-    note: '同一个 El()，指数压到 1.5 就从「方」变「宝石」。',
+    note: t('shapes.js.lab.note.gem'),
   },
   egg: {
     label: 'egg 蛋',
     eq: (v) => `av(98, 113, ${v.pinch})`,
-    ctrls: [['pinch', '收窄 pinch', 0, 0.6, 0.01, 0.22]],
+    ctrls: [['pinch', t('shapes.js.lab.ctrl.pinch'), 0, 0.6, 0.01, 0.22]],
     gen: (v) => av(98, 113, v.pinch),
-    note: '极坐标半径按 (1-sinθ)/2 做上下不对称 —— 就是蛋。',
+    note: t('shapes.js.lab.note.egg'),
   },
   house: {
     label: 'house 房子',
     eq: (v) => `lv(100, 110, 78, ${v.corner})`,
-    ctrls: [['corner', '圆角 cornerR', 0, 60, 1, 29]],
+    ctrls: [['corner', t('shapes.js.lab.ctrl.cornerR'), 0, 60, 1, 29]],
     gen: (v) => lv(100, 110, 78, v.corner),
-    note: '5 个点（左下、右下、右肩、屋脊、左肩）的圆角多边形。',
+    note: t('shapes.js.lab.note.house'),
   },
   tablet: {
     label: 'tablet 平板',
-    eq: (v) => `tv(114, ${v.cap})  // 另加 jl("tablet","x") 球链`,
-    ctrls: [['cap', '圆头半径', 20, 114, 1, 74]],
+    eq: (v) => `tv(114, ${v.cap})  // ${t('shapes.js.lab.eq.plusBalls')}`,
+    ctrls: [['cap', t('shapes.js.lab.ctrl.cap'), 20, 114, 1, 74]],
     gen: (v) => tv(114, v.cap),
-    note: '直边 + 两段椭圆弧收头（gn.arc 用三次贝塞尔拟合）。',
+    note: t('shapes.js.lab.note.tablet'),
   },
   teardrop: {
     label: 'teardrop 水滴',
     eq: (v) => `cv(88, x-114, x+26, ${v.corner})`,
-    ctrls: [['corner', '尖端圆角', 0, 80, 1, 48]],
+    ctrls: [['corner', t('shapes.js.lab.ctrl.tipCorner'), 0, 80, 1, 48]],
     gen: (v) => cv(88, X - 114, X + 26, v.corner),
-    note: '一个 corner + 一段大圆弧，把圆收成一个尖。',
+    note: t('shapes.js.lab.note.teardrop'),
   },
 };
 
@@ -211,12 +212,12 @@ function initRecon(root, byName) {
         <div class="lab-stage"><svg data-fit><path style="fill:#0a0a0c" d="${live}"/></svg></div>
       </div>
       <div class="recon-cap">
-        <span>App 输出<small>带静止姿态 + 投影</small></span>
-        <span>公式重绘<small>平面轮廓</small></span>
+        <span>${t('shapes.js.recon.appOut')}<small>${t('shapes.js.recon.appOutSub')}</small></span>
+        <span>${t('shapes.js.recon.formula')}<small>${t('shapes.js.recon.formulaSub')}</small></span>
       </div>
       <p class="hint" style="margin-top:8px">
-        径向偏差 <code>${p.rms.toFixed(4)}</code>
-        ${absDeg > 0.5 ? ` · 倾斜 <code>${absDeg.toFixed(1)}°</code>` : ''}
+        ${t('shapes.js.recon.deviation')} <code>${p.rms.toFixed(4)}</code>
+        ${absDeg > 0.5 ? ` · ${t('shapes.js.recon.tilt')} <code>${absDeg.toFixed(1)}°</code>` : ''}
       </p>`;
     host.appendChild(card);
   }
@@ -228,14 +229,7 @@ function initRecon(root, byName) {
   const avg = tilts.reduce((a, b) => a + b, 0) / tilts.length;
   const rLo = Math.min(...rmss), rHi = Math.max(...rmss);
   root.querySelector('.recon-summary').innerHTML =
-    `${RECON.length} 个形状的最佳对齐角平均 <code>${avg.toFixed(1)}°</code>，
-     全部落在 <code>${lo.toFixed(1)}°~${hi.toFixed(1)}°</code> 这个窄区间里 ——
-     这不是巧合，它是引擎<b>静止姿态的倾斜量</b>（<code>baseEulerDeg</code> 由引擎用真 3D
-     旋转矩阵加在轮廓上，不是形状本身自带的）。
-     剩下的残差（<code>${rLo.toFixed(4)}~${rHi.toFixed(4)}</code>）来自 3D 投影：
-     我的重绘是平面，App 的输出已经把厚度投影进来了。
-     作为基线，两个<b>不同</b>形状之间的径向偏差是 <code>0.05~0.08</code> ——
-     所以每个形状确实各自贴着自己的目标，而不是「随便都能对上」。`;
+    `${RECON.length} ${t('shapes.js.recon.sum1')} <code>${avg.toFixed(1)}°</code>${t('shapes.js.recon.sum2')} <code>${lo.toFixed(1)}°~${hi.toFixed(1)}°</code>${t('shapes.js.recon.sum3')}<b>${t('shapes.js.recon.sum4')}</b>${t('shapes.js.recon.sum5')}<code>baseEulerDeg</code>${t('shapes.js.recon.sum6')}<code>${rLo.toFixed(4)}~${rHi.toFixed(4)}</code>${t('shapes.js.recon.sum7')}<b>${t('shapes.js.recon.sum8')}</b>${t('shapes.js.recon.sum9')} <code>0.05~0.08</code>${t('shapes.js.recon.sum10')}`;
 }
 
 function valsDefault(def) {

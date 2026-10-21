@@ -1,8 +1,10 @@
 /* ============================================================
    GrokBot 解剖 · 共享骨架行为
    所有页面引入：<script type="module" src="design-system/shell.js">
-   负责：主题切换、页内 TOC 滚动高亮、代码块复制、滚动进场
+   负责：i18n、主题切换、语言切换、页内 TOC 滚动高亮、代码块复制、滚动进场
    ============================================================ */
+
+import { getLang, setLang, applyI18n, t } from "../js/i18n/i18n.js";
 
 /* ---------- 主题 ---------- */
 const THEME_KEY = "gb-theme";
@@ -38,6 +40,20 @@ export function initTheme() {
   });
 }
 
+/* ---------- 语言切换（按钮注入 .topbar__end，切语言 = 刷新页面） ---------- */
+export function initLang() {
+  const host = document.querySelector(".topbar__end");
+  if (!host) return;
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "icon-btn lang-btn";
+  btn.textContent = getLang() === "en" ? "中" : "EN";
+  btn.title = t("common.lang.toggle");
+  btn.setAttribute("aria-label", t("common.lang.toggle"));
+  btn.addEventListener("click", () => setLang(getLang() === "en" ? "zh" : "en"));
+  host.prepend(btn);
+}
+
 /* ---------- 页内 TOC 滚动高亮 ---------- */
 export function initToc() {
   const links = [...document.querySelectorAll(".toc a[href^='#']")];
@@ -64,8 +80,8 @@ export function initCodeCopy() {
       const pre = btn.closest(".codeblock")?.querySelector("pre");
       if (!pre) return;
       await navigator.clipboard.writeText(pre.innerText).catch(() => {});
-      btn.textContent = "已复制";
-      setTimeout(() => (btn.textContent = "复制"), 1500);
+      btn.textContent = t("common.copied");
+      setTimeout(() => (btn.textContent = t("common.copy")), 1500);
     });
   });
 }
@@ -89,6 +105,8 @@ export function initReveal() {
 }
 
 initTheme();
+applyI18n();
+initLang();
 initToc();
 initCodeCopy();
 initReveal();

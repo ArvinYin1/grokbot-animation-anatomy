@@ -4,6 +4,7 @@
 // 是有 deadline 的贝塞尔（按真实时长填槽），amount / spin 是弹簧实测值（debugFrame）。
 import { createGrokBot } from '../vendor/grok-player.js';
 import { rafLoop } from '../lib.js';
+import { t } from '../i18n/i18n.js';
 
 const SVGNS = 'http://www.w3.org/2000/svg';
 const el = (tag, attrs = {}, parent) => {
@@ -27,10 +28,10 @@ export function init(root) {
   const tl = root.querySelector('.switch-tl');
   const LX = 132, LW = 420, LH = 22, GAP = 8;
   const lanes = [
-    { key: 'bridge', label: 'bridge clip', note: '0.35s · 贝塞尔', color: '#2e6bff' },
-    { key: 'face', label: '表情 morph', note: '0.28s · face 变化时', color: '#8a5cf6' },
-    { key: 'amount', label: 'amount', note: '弹簧实测', color: '#1d9e59' },
-    { key: 'spin', label: 'spin 半转身', note: '弹簧实测 · 满槽=π', color: '#e07020' },
+    { key: 'bridge', label: 'bridge clip', note: t('index.js.states.noteBridge'), color: '#2e6bff' },
+    { key: 'face', label: t('index.js.states.laneFace'), note: t('index.js.states.noteFace'), color: '#8a5cf6' },
+    { key: 'amount', label: 'amount', note: t('index.js.states.noteAmount'), color: '#1d9e59' },
+    { key: 'spin', label: t('index.js.states.laneSpin'), note: t('index.js.states.noteSpin'), color: '#e07020' },
   ].map((cfg, i) => {
     const y = 8 + i * (LH + GAP);
     el('text', { x: LX - 8, y: y + LH / 2 + 4, 'text-anchor': 'end', class: 'sw-label' }, tl).textContent = cfg.label;
@@ -86,7 +87,7 @@ export function init(root) {
 
   // 真实当前 clip：状态机种子化洗牌抽取的结果
   setInterval(() => {
-    nowEl.textContent = `正在播放：${bot.clip ?? '—'}（state: ${bot.state}）`;
+    nowEl.textContent = `${t('index.js.states.nowPlaying')}${bot.clip ?? '—'}${t('index.js.states.statePre')}${bot.state}${t('index.js.states.statePost')}`;
   }, 300);
 
   // idle 的真实 clip 池（来自 grok-recipes.json 的 states.idle.clips）
@@ -94,7 +95,7 @@ export function init(root) {
     .then((r) => r.json())
     .then((data) => {
       const pool = data.states?.idle?.clips ?? [];
-      poolEl.textContent = `idle 的 clip 池（真实数据）：[${pool.join(', ')}] —— 种子化洗牌抽取、随机相位起播`;
+      poolEl.textContent = `${t('index.js.states.poolPre')}${pool.join(', ')}${t('index.js.states.poolPost')}`;
     })
     .catch(() => { poolEl.textContent = ''; });
 }

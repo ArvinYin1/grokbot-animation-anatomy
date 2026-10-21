@@ -4,6 +4,7 @@
 // 引擎每帧只写变化了的 attribute，observer 按帧批量收到 mutation 记录，
 // 正好把 diff 写入器的工作量可视化出来。
 import { createGrokBot } from '../vendor/grok-player.js';
+import { t } from '../i18n/i18n.js';
 
 const cut = (s, n) => (s && s.length > n ? s.slice(0, n) + ' …' : s || '—');
 
@@ -19,11 +20,13 @@ export function init(root) {
   };
   const rowEls = Object.fromEntries(
     Object.keys(rows).map((k) => [k, rows[k].closest('.panel-row')]));
-  rows.mask.textContent = '<mask> = rect(#fff) + path(#000) 挖洞（morph 状态启用）；idle/sphere 模式改用路径布尔裁剪（OM）把眼睛裁进 body[d]';
+  rows.mask.textContent = t('index.js.svg.maskNote');
 
   const stepBtn = root.querySelector('[data-act="step"]');
   const step1Btn = root.querySelector('[data-act="step1"]');
   const diffBtn = root.querySelector('[data-act="diff"]');
+  stepBtn.textContent = t('index.js.svg.stepOff');
+  diffBtn.textContent = t('index.js.svg.diffOff');
 
   let showDiff = false, stepMode = false;
   let bot = null, observer = null, mountToken = 0;
@@ -46,9 +49,9 @@ export function init(root) {
     const vals = {
       // 外轮廓是固定椭圆弧，串头看起来不变；长度随眼睛裁切弧逐帧变化，放在前面
       bodyD: bodyD ? `len ${bodyD.length} · ${cut(bodyD, 52)}` : '—',
-      eyeD: eyeD ? cut(eyeD, 74) : '（空 — sphere 模式下眼睛是裁进 body path 的地平线弧）',
-      headTr: headG?.getAttribute('transform') ?? '（无 — 恒等）',
-      zoomTr: zoomG?.getAttribute('transform') ?? '（无 — 恒等）',
+      eyeD: eyeD ? cut(eyeD, 74) : t('index.js.svg.eyeEmpty'),
+      headTr: headG?.getAttribute('transform') ?? t('index.js.svg.trNone'),
+      zoomTr: zoomG?.getAttribute('transform') ?? t('index.js.svg.trNone'),
       dom: lastWrites,
     };
     for (const k in vals) {
@@ -86,7 +89,7 @@ export function init(root) {
         }
         if (agg.size === 0) return;
         const total = [...agg.values()].reduce((a, b) => a + b, 0);
-        lastWrites = `${total} 次：` + [...agg].sort((a, b) => b[1] - a[1])
+        lastWrites = `${total}${t('index.js.svg.domWrites')}` + [...agg].sort((a, b) => b[1] - a[1])
           .slice(0, 4).map(([k, c]) => `${k}×${c}`).join(' ');
         if (showDiff) {
           for (const n of hotNodes) n.removeAttribute('diff-hot');
@@ -109,7 +112,7 @@ export function init(root) {
   stepBtn.addEventListener('click', () => {
     stepMode = !stepMode;
     stepBtn.setAttribute('aria-pressed', stepMode);
-    stepBtn.textContent = stepMode ? '逐帧步进：开' : '逐帧步进：关';
+    stepBtn.textContent = stepMode ? t('index.js.svg.stepOn') : t('index.js.svg.stepOff');
     step1Btn.hidden = !stepMode;
     lastWrites = '—';
     mount(stepMode);
@@ -123,7 +126,7 @@ export function init(root) {
   diffBtn.addEventListener('click', () => {
     showDiff = !showDiff;
     diffBtn.setAttribute('aria-pressed', showDiff);
-    diffBtn.textContent = showDiff ? '显示 DOM diff：开' : '显示 DOM diff：关';
+    diffBtn.textContent = showDiff ? t('index.js.svg.diffOn') : t('index.js.svg.diffOff');
     if (!showDiff) {
       root.querySelectorAll('.panel-row').forEach((r) => r.classList.remove('flash'));
       for (const n of hotNodes) n.removeAttribute('diff-hot');

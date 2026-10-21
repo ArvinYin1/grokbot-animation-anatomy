@@ -1,11 +1,12 @@
 // 形状页 · 01 流水线 + 03 分组画廊 + 04 凸包约束
 // 三个版块共用同一份 shape-data.json（main 里 fetch 一次传入）。
 import { hull, ptsOf, polyD, hasArc, fitViewBox } from '../lib-shapes.js';
+import { t } from '../i18n/i18n.js';
 
 const GALLERY_GROUPS = [
-  ['solid', '投影点云 → 凸包 pi()', '只能凸', 'solid'],
-  ['extrusion', '逐环投影 → 环间四边形', '可凹', 'extrusion'],
-  ['loft', '逐环投影 → eS() 缝合', '可凹', 'loft'],
+  ['solid', t('shapes.js.gallery.solidHow'), t('shapes.js.gallery.solidNote'), 'solid'],
+  ['extrusion', t('shapes.js.gallery.extrusionHow'), t('shapes.js.gallery.extrusionNote'), 'extrusion'],
+  ['loft', t('shapes.js.gallery.loftHow'), t('shapes.js.gallery.loftNote'), 'loft'],
 ];
 
 // silhouette 归类：solid 家族 = solid + solid+balls（球链也走凸包语义）
@@ -16,13 +17,26 @@ const HULL_SET = ['sparkle', 'star', 'clover', 'flower', 'house', 'cloud',
   'heart', 'square', 'teardrop', 'egg'];
 
 const STAGES = [
-  ['Mv[name]()', '参数化路径生成器', '每个形状一个函数，只吃 2~3 个数字'],
-  ['Kr(name)', '记忆化 + 后处理', '得到 {path, ring, top, bottom, beltRadius…}'],
-  ['mt(name)', '路径 → 点列', '手写 SVG path 解析器 is() + 自适应细分'],
-  ['Iv[name]()', '形状描述符', '{size, silhouette, seat}；silhouette 有 3 种 kind'],
-  ['Zv()', '按 kind 分派轮廓算法', '凸包 / 环间四边形 / 环缝合 —— 凸凹分水岭'],
-  ['&lt;path d&gt;', '交给 SVG 渲染', '再乘 squash / offset 矩阵，眼睛按 seat 落座'],
+  ['Mv[name]()', t('shapes.js.pipeline.stageMv'), '每个形状一个函数，只吃 2~3 个数字'],
+  ['Kr(name)', t('shapes.js.pipeline.stageKr'), '得到 {path, ring, top, bottom, beltRadius…}'],
+  ['mt(name)', t('shapes.js.pipeline.stageMt'), '手写 SVG path 解析器 is() + 自适应细分'],
+  ['Iv[name]()', t('shapes.js.pipeline.stageIv'), '{size, silhouette, seat}；silhouette 有 3 种 kind'],
+  ['Zv()', t('shapes.js.pipeline.stageZv'), '凸包 / 环间四边形 / 环缝合 —— 凸凹分水岭'],
+  ['&lt;path d&gt;', t('shapes.js.pipeline.stageSvg'), '再乘 squash / offset 矩阵，眼睛按 seat 落座'],
 ];
+
+// 展示代码里的中文注释：英文模式按片段替换（zh 原样）
+const CODE_PHRASES = [
+  ['Mv 表：每个形状一个生成器，参数只有 2~3 个数字', 'shapes.js.code.mvTable'],
+  ['唯一手写的', 'shapes.js.code.handwritten'],
+  ['后处理', 'shapes.js.code.postProcess'],
+  ['is()：手写 path 解析 + 自适应细分', 'shapes.js.code.isParser'],
+  ['solid + 圆角板', 'shapes.js.code.solidRounded'],
+  ['→ 凸包 pi()', 'shapes.js.code.toHull'],
+  ['extrusion：逐环投影，环间连四边形', 'shapes.js.code.extrusionQuad'],
+  ['Andrew 单调链', 'shapes.js.code.monotoneChain'],
+];
+const trCode = (s) => CODE_PHRASES.reduce((out, [zh, key]) => out.replaceAll(zh, t(key)), s);
 
 const STAGE_CODE = [
   `// Mv 表：每个形状一个生成器，参数只有 2~3 个数字
@@ -97,7 +111,7 @@ function initPipeline(root) {
   });
   function select(i) {
     buttons.forEach((b, k) => b.setAttribute('aria-pressed', String(k === i)));
-    code.textContent = STAGE_CODE[i];
+    code.textContent = trCode(STAGE_CODE[i]);
   }
   select(4); // 默认落在分派那一步：它才是凸凹分水岭
 }
@@ -113,7 +127,7 @@ function initGallery(root, data) {
     return `<div class="shape-group">
       <div class="gh">
         <span class="kind${kind === 'solid' ? '' : ' cc'}">${kind}</span>
-        <span class="gsub">${how} · <b>${note}</b> · ${names.length} 个</span>
+        <span class="gsub">${how} · <b>${note}</b> · ${names.length} ${t('shapes.js.gallery.count')}</span>
       </div>
       <div class="shape-grid c5">
         ${names.map((n) => cell(byName[n], false)).join('')}
@@ -125,9 +139,7 @@ function initGallery(root, data) {
   // 三个分组里用到了 solid+balls（bean/tablet/capsule），单独说明
   const balls = data.shapes.filter((s) => s.silhouette === 'solid+balls').map((s) => s.name);
   host.insertAdjacentHTML('beforeend',
-    `<p class="hint">其中 <code>${balls.join(' / ')}</code> 不生成路径：它们用一串球
-     当轮廓（<code>silhouette.balls</code>），靠射线和圆求交得到并集边界。
-     所以它们也属于 <code>solid</code> 家族 —— 同样只能凸。</p>`);
+    `<p class="hint">${t('shapes.js.gallery.ballsHint1')}<code>${balls.join(' / ')}</code>${t('shapes.js.gallery.ballsHint2')}<code>silhouette.balls</code>${t('shapes.js.gallery.ballsHint3')}<code>solid</code>${t('shapes.js.gallery.ballsHint4')}</p>`);
 }
 
 // 单个形状卡片
@@ -136,7 +148,7 @@ export function cell(shape, badge) {
   return `<div class="shape-cell">
     <svg data-fit><path class="ink" d="${shape.path}"/></svg>
     <div class="nm">${shape.name}</div>
-    ${badge ? `<span class="tag ${concave ? 'cc' : 'cv'}">${concave ? '凹' : '凸'}</span>` : ''}
+    ${badge ? `<span class="tag ${concave ? 'cc' : 'cv'}">${concave ? t('shapes.js.badge.concave') : t('shapes.js.badge.convex')}</span>` : ''}
   </div>`;
 }
 
@@ -163,20 +175,12 @@ function initHull(root, data) {
     grid.querySelectorAll('svg[data-fit]').forEach((svg) => fitViewBox(svg));
 
     if (mode === 'hull') {
-      note.textContent = '凸包之后的轮廓 —— 凹口全被填平';
+      note.textContent = t('shapes.js.hull.noteHull');
       const lost = HULL_SET.filter((n) => byName[n].concave);
-      text.innerHTML = `对比上一个视图：<b>${lost.join(' / ')}</b> 的凹口全部消失了，
-        变成一块整凸形。这就是为什么这些形状<b>必须</b>用
-        <code>extrusion</code> 或 <code>loft</code> —— 没有任何报错，只是形状不对。`;
+      text.innerHTML = `${t('shapes.js.hull.hullText1')}<b>${lost.join(' / ')}</b>${t('shapes.js.hull.hullText2')}<b>${t('shapes.js.hull.hullTextMust')}</b>${t('shapes.js.hull.hullText3')}<code>extrusion</code>${t('shapes.js.hull.hullText4')}<code>loft</code>${t('shapes.js.hull.hullText5')}`;
     } else {
-      note.textContent = 'App 实际渲染的样子';
-      text.innerHTML = `这 10 个里 <b>sparkle / star / clover / flower / house</b> 走
-        <code>extrusion</code>，<b>cloud / heart</b> 走 <code>loft</code>。
-        要留意 <code>house</code> / <code>hex</code> / <code>square</code>：
-        它们实测是<b>凸</b>的，却仍然走 <code>extrusion</code> —— 因为 silhouette
-        不只由凸凹决定，还取决于作者用哪个族来建它（圆角多边形 + 厚度这一族就是
-        <code>Bn()</code> → extrusion）。所以规则是<b>单向</b>的：<b>凹 ⟹ 一定不能用 solid</b>，
-        但凸不意味着只能用 solid。`;
+      note.textContent = t('shapes.js.hull.noteReal');
+      text.innerHTML = `${t('shapes.js.hull.realText1')}<b>sparkle / star / clover / flower / house</b>${t('shapes.js.hull.realText2')}<code>extrusion</code>${t('shapes.js.hull.realText3')}<b>cloud / heart</b>${t('shapes.js.hull.realText4')}<code>loft</code>${t('shapes.js.hull.realText5')}<code>house</code> / <code>hex</code> / <code>square</code>${t('shapes.js.hull.realText6')}<b>${t('shapes.js.hull.realTextConvex')}</b>${t('shapes.js.hull.realText7')}<code>extrusion</code>${t('shapes.js.hull.realText8')}<code>Bn()</code>${t('shapes.js.hull.realText9')}<b>${t('shapes.js.hull.realTextOneWay')}</b>${t('shapes.js.hull.realText10')}<b>${t('shapes.js.hull.realTextRule')}</b>${t('shapes.js.hull.realText11')}`;
     }
   }
 
@@ -191,7 +195,7 @@ function initHull(root, data) {
   // 实测凸性表，用真实数字支撑上面的说法
   const measured = data.shapes.filter((s) => s.hullLoss != null && s.concave);
   root.querySelector('.hull-measured').innerHTML =
-    `实测（对 App 自己渲染出来的轮廓跑凸包）：` +
+    t('shapes.js.hull.measured1') +
     measured.map((s) => `<code>${s.name} ${(s.hullLoss * 100).toFixed(1)}%</code>`).join(' ') +
-    ` —— 这些是凸包会吃掉的面积占比。`;
+    t('shapes.js.hull.measured2');
 }

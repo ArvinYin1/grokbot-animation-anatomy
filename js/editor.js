@@ -6,23 +6,24 @@
 //   右侧检查器：选中关键帧编辑数值 + 可视化贝塞尔缓动；未选中时编辑 clip/状态配置。
 // 数据模型与导出格式同 v1：与原引擎 clip/state JSON 完全同构。
 import { createGrokBot } from './vendor/grok-player.js';
+import { t } from './i18n/i18n.js';
 
 const $ = (s) => document.querySelector(s);
 
 const TRACKS = [
-  { key: 'position', label: '位置 position', comps: ['x', 'y'], step: 0.05, def: [0, 0], hint: '单位：身体半径', color: '#2e6bff' },
-  { key: 'rotation', label: '旋转 rotation', comps: ['pitch', 'yaw', 'roll'], step: 1, def: [0, 0, 0], hint: '单位：度', color: '#8a5cf6' },
-  { key: 'squash', label: '挤压 squash', comps: ['x 倍率', 'y 倍率'], step: 0.05, def: [1, 1], hint: '1 = 不变形', color: '#0ea5e9' },
-  { key: 'scale', label: '缩放 scale', comps: ['倍率'], step: 0.05, def: [1], hint: '1 = 原始大小', color: '#0d9488' },
-  { key: 'lids', label: '眼睑 lids', comps: ['闭合'], step: 0.05, def: [0], hint: '0 睁开 → 1 闭合', color: '#e11d48' },
+  { key: 'position', label: t('editor.js.track.position'), comps: ['x', 'y'], step: 0.05, def: [0, 0], hint: t('editor.js.hint.position'), color: '#2e6bff' },
+  { key: 'rotation', label: t('editor.js.track.rotation'), comps: ['pitch', 'yaw', 'roll'], step: 1, def: [0, 0, 0], hint: t('editor.js.hint.rotation'), color: '#8a5cf6' },
+  { key: 'squash', label: t('editor.js.track.squash'), comps: [t('editor.js.comp.xScale'), t('editor.js.comp.yScale')], step: 0.05, def: [1, 1], hint: t('editor.js.hint.squash'), color: '#0ea5e9' },
+  { key: 'scale', label: t('editor.js.track.scale'), comps: [t('editor.js.comp.scale')], step: 0.05, def: [1], hint: t('editor.js.hint.scale'), color: '#0d9488' },
+  { key: 'lids', label: t('editor.js.track.lids'), comps: [t('editor.js.comp.close')], step: 0.05, def: [0], hint: t('editor.js.hint.lids'), color: '#e11d48' },
 ];
-const EXPR_TRACK = { key: 'expression', label: '表情事件', color: '#ff8a3d' };
+const EXPR_TRACK = { key: 'expression', label: t('editor.js.track.expression'), color: '#ff8a3d' };
 const EASE_PRESETS = [
-  ['引擎默认', [0.42, 0, 0.58, 1]],
-  ['线性', [0, 0, 1, 1]],
-  ['缓入', [0.42, 0, 1, 1]],
-  ['缓出', [0, 0, 0.58, 1]],
-  ['回弹', [0.34, 1.56, 0.64, 1]],
+  [t('editor.js.ease.default'), [0.42, 0, 0.58, 1]],
+  [t('editor.js.ease.linear'), [0, 0, 1, 1]],
+  [t('editor.js.ease.easeIn'), [0.42, 0, 1, 1]],
+  [t('editor.js.ease.easeOut'), [0, 0, 0.58, 1]],
+  [t('editor.js.ease.bounce'), [0.34, 1.56, 0.64, 1]],
 ];
 
 let PPS = 140;        // 时间轴：像素/秒（⌘+滚轮 / 走带 ± 按钮缩放）
@@ -166,14 +167,14 @@ function checkDraft() {
   try { d = JSON.parse(localStorage.getItem(LS_KEY)); } catch { return; }
   if (!d?.clip || d.clip.name !== clip.name) return;
   if (JSON.stringify(d.clip) === JSON.stringify(clip)) return;
-  toast(`检测到上次未保存的编辑（${new Date(d.ts).toLocaleTimeString()}）`, [
-    { label: '恢复', fn: () => {
+  toast(`${t('editor.js.draftDetectedBefore')}${new Date(d.ts).toLocaleTimeString()}${t('editor.js.draftDetectedAfter')}`, [
+    { label: t('editor.js.draftRestore'), fn: () => {
       pushUndo();
       clip = d.clip; st = d.st ?? st;
       selKeys = new Set(d.sel ?? []); sel = d.anchor ?? null;
       renderTimeline(); renderInspector(); schedulePreview();
     } },
-    { label: '丢弃', fn: () => { try { localStorage.removeItem(LS_KEY); } catch {} } },
+    { label: t('editor.js.draftDiscard'), fn: () => { try { localStorage.removeItem(LS_KEY); } catch {} } },
   ]);
 }
 
@@ -259,14 +260,14 @@ function rebuildPreview() {
 function pausePlay() {
   if (paused) return;
   pausePhase = loopPhase(); paused = true;
-  $('#ed-playpause').textContent = '▶ 播放';
+  $('#ed-playpause').textContent = t('editor.js.play');
   rebuildPreview();
 }
 function resumePlay() {
   if (!paused) return;
   paused = false;
   resumePhase = pausePhase; // 由 rebuildPreview 接管设置 playT0，从冻结相位继续循环
-  $('#ed-playpause').textContent = '⏸ 暂停';
+  $('#ed-playpause').textContent = t('editor.js.pause');
   rebuildPreview();
 }
 function setMode(m) {
@@ -274,7 +275,7 @@ function setMode(m) {
   paused = false;
   if (m === 'play') playT0 = performance.now() - scrubT * 1000; // 从 scrub 点继续循环
   mode = m;
-  $('#ed-playpause').textContent = m === 'play' ? '⏸ 暂停' : '▶ 播放';
+  $('#ed-playpause').textContent = m === 'play' ? t('editor.js.pause') : t('editor.js.play');
   $('#ed-playhead').style.display = m === 'play' ? 'none' : '';
   updateTimeLabel();
   rebuildPreview();
@@ -286,8 +287,8 @@ function updateTimeLabel() {
 (function tick() {
   if (mode === 'play' && clip)
     $('#ed-time').textContent = paused ?
-      `t = ${pausePhase.toFixed(2)}s / ${clip.duration}s（已暂停）` :
-      `t = ${loopPhase().toFixed(2)}s / ${clip.duration}s（循环）`;
+      `t = ${pausePhase.toFixed(2)}s / ${clip.duration}s${t('editor.js.pausedSuffix')}` :
+      `t = ${loopPhase().toFixed(2)}s / ${clip.duration}s${t('editor.js.loopingSuffix')}`;
   requestAnimationFrame(tick);
 })();
 
@@ -323,7 +324,7 @@ function renderTimeline() {
     return `<div class="ed2-lane">
       <div class="ed2-lane-label" style="width:${LABEL_W}px">
         <i style="background:${tr.color}"></i>${tr.label}
-        <button class="ed2-add" data-add="${tr.key}" title="在播放头处添加">+</button>
+        <button class="ed2-add" data-add="${tr.key}" title="${t('editor.js.addAtPlayhead')}">+</button>
       </div>
       <div class="ed2-lane-track" data-lane="${tr.key}" style="width:${W}px">${dots}</div>
     </div>`;
@@ -373,46 +374,45 @@ function renderInspector() {
     const ease = firstKf?.ease ?? EASE_PRESETS[0][1];
     const presetIdx = EASE_PRESETS.findIndex(([, p]) => p.every((v, j) => Math.abs(v - ease[j]) < 1e-6));
     el.innerHTML = `
-      <h3 class="ed-h">已选 ${selKeys.size} 个关键帧</h3>
-      <p class="hint">拖动任一选中菱形可整体平移（保持相对间隔）；←/→ 整体微调；
-        ⌘C 复制、⌘V 粘贴到播放头；Esc 取消选择。</p>
-      <h3 class="ed-h">批量缓动（应用到全部选中）</h3>
-      <select data-msel="epreset"><option value="" ${presetIdx < 0 ? 'selected' : ''}>自定义</option>
+      <h3 class="ed-h">${t('editor.js.selectedBefore')}${selKeys.size}${t('editor.js.selectedAfter')}</h3>
+      <p class="hint">${t('editor.js.multiHint')}</p>
+      <h3 class="ed-h">${t('editor.js.multiEaseHeading')}</h3>
+      <select data-msel="epreset"><option value="" ${presetIdx < 0 ? 'selected' : ''}>${t('editor.js.customEase')}</option>
         ${EASE_PRESETS.map(([n, p], k) => `<option value="${k}" ${k === presetIdx ? 'selected' : ''}>${n} [${p}]</option>`).join('')}
       </select>
       <div class="ed-ease-nums">${ease.map((v, j) =>
         `<input type="number" data-msel="e${j}" step="0.01" value="${fmt(v)}">`).join('')}</div>
-      <div class="controls"><button data-kf="delete">删除这 ${selKeys.size} 个关键帧</button></div>`;
+      <div class="controls"><button data-kf="delete">${t('editor.js.deleteMultiBefore')}${selKeys.size}${t('editor.js.deleteMultiAfter')}</button></div>`;
     return;
   }
   if (sel) return renderKfInspector(el, sel.track, sortedKfs(sel.track)[sel.i]);
   el.innerHTML = `
-    <h3 class="ed-h">Clip 配置</h3>
+    <h3 class="ed-h">${t('editor.js.clipConfig')}</h3>
     <div class="ed-form">
-      <label>从现有 clip 开始
-        <select data-ins="template"><option value="">（从空白开始）</option>
+      <label>${t('editor.js.templateLabel')}
+        <select data-ins="template"><option value="">${t('editor.js.templateBlank')}</option>
           ${recipes.clips.map((c) => `<option ${c.name === clip.name ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}
         </select></label>
-      <label>名称 <input type="text" data-ins="name" value="${esc(clip.name)}"></label>
-      <label>时长（秒） <input type="number" data-ins="duration" min="0.2" step="0.1" value="${fmt(clip.duration)}"></label>
+      <label>${t('editor.js.nameLabel')} <input type="text" data-ins="name" value="${esc(clip.name)}"></label>
+      <label>${t('editor.js.durationLabel')} <input type="number" data-ins="duration" min="0.2" step="0.1" value="${fmt(clip.duration)}"></label>
       <label>squashAnchor <input type="number" data-ins="anchor" min="0" max="1" step="0.05" value="${fmt(clip.squashAnchor ?? 0)}"></label>
-      <label>rest 帧时刻 <input type="number" data-ins="rest" min="0" step="0.1" placeholder="（空 = 0）"
+      <label>${t('editor.js.restLabel')} <input type="number" data-ins="rest" min="0" step="0.1" placeholder="${t('editor.js.restPlaceholder')}"
         value="${clip.workArea ? fmt(clip.workArea.start) : ''}"></label>
       <label class="ed-check"><input type="checkbox" data-ins="follow" ${clip.inspect?.follow !== false ? 'checked' : ''}>
-        允许视线跟随（inspect.follow）</label>
+        ${t('editor.js.followLabel')}</label>
     </div>
-    <h3 class="ed-h">状态配置（state）</h3>
+    <h3 class="ed-h">${t('editor.js.stateConfig')}</h3>
     <div class="ed-form">
-      <label>表情 face <select data-ins="face"><option value="">（无）</option>
+      <label>${t('editor.js.faceLabel')} <select data-ins="face"><option value="">${t('editor.js.noneOption')}</option>
         ${recipes.expressionNames.map((n) => `<option ${st.face === n ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></label>
-      <label>morph 装饰 <select data-ins="morph"><option value="">（无）</option>
+      <label>${t('editor.js.morphLabel')} <select data-ins="morph"><option value="">${t('editor.js.noneOption')}</option>
         ${Object.keys(recipes.constants.morph.stateMap).map((n) => `<option ${st.morph === n ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></label>
-      <label>播完自动转移 next <select data-ins="next"><option value="">（无）</option>
+      <label>${t('editor.js.nextLabel')} <select data-ins="next"><option value="">${t('editor.js.noneOption')}</option>
         ${Object.keys(recipes.states).map((n) => `<option ${st.next === n ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></label>
-      <label>停留秒数 holdSeconds <input type="number" data-ins="hold" min="0" step="0.1"
-        placeholder="（空 = 立即）" value="${esc(st.holdSeconds)}"></label>
+      <label>${t('editor.js.holdLabel')} <input type="number" data-ins="hold" min="0" step="0.1"
+        placeholder="${t('editor.js.holdPlaceholder')}" value="${esc(st.holdSeconds)}"></label>
     </div>
-    <p class="hint">点击时间轴上的菱形可编辑单个关键帧；单击空白处取消选择回到本面板。</p>`;
+    <p class="hint">${t('editor.js.inspectorHint')}</p>`;
 }
 
 function renderKfInspector(el, track, kf) {
@@ -421,41 +421,41 @@ function renderKfInspector(el, track, kf) {
   if (track === 'expression') {
     const names = [...recipes.expressionNames, 'blink'];
     el.innerHTML = `
-      <h3 class="ed-h">表情事件 · t=${kf.t.toFixed(2)}s</h3>
+      <h3 class="ed-h">${t('editor.js.exprHeading')} · t=${kf.t.toFixed(2)}s</h3>
       <div class="ed-form">
-        <label>t（秒） <input type="number" data-kf="t" step="0.05" min="0" value="${fmt(kf.t)}"></label>
-        <label>表情 <select data-kf="name">
+        <label>${t('editor.js.tLabel')} <input type="number" data-kf="t" step="0.05" min="0" value="${fmt(kf.t)}"></label>
+        <label>${t('editor.js.exprLabel')} <select data-kf="name">
           ${names.map((n) => `<option ${n === kf.v ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></label>
         <label class="ed-check"><input type="checkbox" data-kf="cut" ${kf.cut === false ? 'checked' : ''}>
-          经由闭眼过渡（through-blink）</label>
+          ${t('editor.js.cutLabel')}</label>
       </div>
-      <p class="hint">blink 会被引擎展开成 0.26s 眨眼（45% 处闭合）。</p>
-      <div class="controls"><button data-kf="delete">删除此事件</button></div>`;
+      <p class="hint">${t('editor.js.blinkHint')}</p>
+      <div class="controls"><button data-kf="delete">${t('editor.js.deleteEvent')}</button></div>`;
     return;
   }
   const ease = kf.ease ?? EASE_PRESETS[0][1];
   // 当前 ease 与某预设一致时回显预设名，否则显示「自定义」
   const presetIdx = EASE_PRESETS.findIndex(([, p]) => p.every((v, j) => Math.abs(v - ease[j]) < 1e-6));
   el.innerHTML = `
-    <h3 class="ed-h">${esc(tr.label)} · 关键帧 t=${kf.t.toFixed(2)}s</h3>
+    <h3 class="ed-h">${esc(tr.label)} · ${t('editor.js.keyframe')} t=${kf.t.toFixed(2)}s</h3>
     <div class="ed-form">
-      <label>t（秒） <input type="number" data-kf="t" step="0.05" min="0" value="${fmt(kf.t)}"></label>
+      <label>${t('editor.js.tLabel')} <input type="number" data-kf="t" step="0.05" min="0" value="${fmt(kf.t)}"></label>
       ${tr.comps.map((c, j) => `<label>${esc(c)} <input type="number" data-kf="v${j}"
         step="${tr.step}" value="${fmt(kf.v[j] ?? tr.def[j])}"></label>`).join('')}
     </div>
-    <h3 class="ed-h">缓动（进入下一段）</h3>
+    <h3 class="ed-h">${t('editor.js.easeHeading')}</h3>
     <div class="ed2-ease-row">
       <svg id="ed-bezier" viewBox="0 0 240 160"></svg>
       <div>
-        <select data-kf="epreset"><option value="" ${presetIdx < 0 ? 'selected' : ''}>自定义</option>
+        <select data-kf="epreset"><option value="" ${presetIdx < 0 ? 'selected' : ''}>${t('editor.js.customEase')}</option>
           ${EASE_PRESETS.map(([n, p], k) => `<option value="${k}" ${k === presetIdx ? 'selected' : ''}>${n} [${p}]</option>`).join('')}
         </select>
         <div class="ed-ease-nums">${ease.map((e, j) =>
           `<input type="number" data-kf="e${j}" step="0.01" value="${fmt(e)}">`).join('')}</div>
-        <p class="hint">拖曲线上的两个手柄。</p>
+        <p class="hint">${t('editor.js.bezierHint')}</p>
       </div>
     </div>
-    <div class="controls"><button data-kf="delete">删除此关键帧</button></div>`;
+    <div class="controls"><button data-kf="delete">${t('editor.js.deleteKeyframe')}</button></div>`;
   drawBezier(ease);
 }
 
@@ -744,7 +744,7 @@ function bindInspector() {
       if (ins === 'template') {
         const src = recipes.clips.find((c) => c.name === e.target.value);
         if (!src) return;
-        if (!confirm('切换模板将丢弃当前编辑，确定吗？')) { renderInspector(); return; }
+        if (!confirm(t('editor.js.confirmTemplate'))) { renderInspector(); return; }
         pushUndo();
         clip = structuredClone(src); sel = null; selKeys.clear();
         renderTimeline(); renderInspector(); schedulePreview(); return;
@@ -762,7 +762,7 @@ function bindInspector() {
           for (const k of Object.keys(clip.tracks))
             clip.tracks[k] = clip.tracks[k].slice().sort((a, b) => a.t - b.t);
           restoreSel(refs);
-          toast(`${clamped} 个关键帧被钳到末尾`);
+          toast(`${clamped}${t('editor.js.clampedAfter')}`);
         }
         renderTimeline();
       }
@@ -888,7 +888,7 @@ function bindStatic() {
   });
   $('#ed-copy').addEventListener('click', async (e) => {
     await navigator.clipboard.writeText($('#ed-json').value);
-    e.target.textContent = '已复制 ✓'; setTimeout(() => { e.target.textContent = '复制 JSON'; }, 1200);
+    e.target.textContent = t('editor.js.copied'); setTimeout(() => { e.target.textContent = t('editor.js.copyJson'); }, 1200);
   });
   const dl = (name, obj) => {
     const a = document.createElement('a');
@@ -901,10 +901,10 @@ function bindStatic() {
     try {
       const obj = JSON.parse($('#ed-json').value);
       const c = obj.clip ?? obj;
-      if (!c || typeof c !== 'object' || Array.isArray(c)) throw new Error('不是有效的 clip 对象');
-      if (typeof c.name !== 'string' || !c.name) throw new Error('缺少 clip.name');
-      if (!Number.isFinite(+c.duration) || +c.duration <= 0) throw new Error('缺少有效的 duration');
-      if (!c.tracks || typeof c.tracks !== 'object' || Array.isArray(c.tracks)) throw new Error('缺少 tracks');
+      if (!c || typeof c !== 'object' || Array.isArray(c)) throw new Error(t('editor.js.errNotClip'));
+      if (typeof c.name !== 'string' || !c.name) throw new Error(t('editor.js.errNoName'));
+      if (!Number.isFinite(+c.duration) || +c.duration <= 0) throw new Error(t('editor.js.errNoDuration'));
+      if (!c.tracks || typeof c.tracks !== 'object' || Array.isArray(c.tracks)) throw new Error(t('editor.js.errNoTracks'));
       pushUndo();
       clip = c; sel = null; selKeys.clear();
       clip.duration = +clip.duration;
@@ -925,7 +925,7 @@ function bindStatic() {
         st.holdSeconds = Number.isFinite(+s.holdSeconds) ? s.holdSeconds : '';
       }
       renderTimeline(); renderInspector(); schedulePreview();
-    } catch (err) { alert(`JSON 解析失败：${err.message}`); }
+    } catch (err) { alert(`${t('editor.js.errParse')}${err.message}`); }
   });
 }
 

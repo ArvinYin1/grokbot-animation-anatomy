@@ -4,6 +4,7 @@
 //    播放头经 debugFrame() 与引擎同步。
 import { createGrokBot } from '../vendor/grok-player.js';
 import { rafLoop } from '../lib.js';
+import { t } from '../i18n/i18n.js';
 
 const SVGNS = 'http://www.w3.org/2000/svg';
 const el = (tag, attrs = {}, parent) => {
@@ -45,15 +46,15 @@ const PRESETS = [
 ];
 
 const TRACKS = [
-  ['rotation · yaw（左右转头）', 'rotation', 1],
-  ['rotation · pitch（俯仰）', 'rotation', 0],
-  ['rotation · roll（侧倾）', 'rotation', 2],
+  [t('index.js.clip.trackRotYaw'), 'rotation', 1],
+  [t('index.js.clip.trackRotPitch'), 'rotation', 0],
+  [t('index.js.clip.trackRotRoll'), 'rotation', 2],
   ['position · x', 'position', 0],
   ['position · y', 'position', 1],
   ['squash · x', 'squash', 0],
   ['squash · y', 'squash', 1],
   ['zoom', 'zoom', 0],
-  ['lids（眨眼编译结果）', 'lids', 0],
+  [t('index.js.clip.trackLids'), 'lids', 0],
 ];
 
 export function init(root) {
@@ -77,8 +78,8 @@ function initBezierLab(root) {
     el('line', { x1: px(0), y1: py(y), x2: px(1), y2: py(y), class: 'grid out' }, svg);
     el('text', { x: 14, y: py(y) + 4 }, svg).textContent = `y=${y}`;
   }
-  el('text', { x: 14, y: py(1 + PAD) + 10, class: 'zone-label' }, svg).textContent = 'y>1 过冲区（CSS 不允许）';
-  el('text', { x: 14, y: py(-PAD) + 4, class: 'zone-label' }, svg).textContent = 'y<0 下潜区';
+  el('text', { x: 14, y: py(1 + PAD) + 10, class: 'zone-label' }, svg).textContent = t('index.js.clip.zoneOver');
+  el('text', { x: 14, y: py(-PAD) + 4, class: 'zone-label' }, svg).textContent = t('index.js.clip.zoneUnder');
   for (const x of [0, 1]) el('line', { x1: px(x), y1: py(-PAD), x2: px(x), y2: py(1 + PAD), class: 'grid' }, svg);
   el('text', { x: px(0) - 8, y: H - 8 }, svg).textContent = 't=0';
   el('text', { x: px(1) - 8, y: H - 8 }, svg).textContent = 't=1';
@@ -197,7 +198,7 @@ function initClipLive(root) {
 
     if (kfs.length === 0) {
       el('text', { x: W / 2, y: H / 2, 'text-anchor': 'middle', class: 'empty-label' }, svg)
-        .textContent = `该 clip 的 ${rawName} 轨道没有关键帧`;
+        .textContent = `${t('index.js.clip.emptyPre')}${rawName}${t('index.js.clip.emptyPost')}`;
       return () => 0;
     }
 
@@ -254,9 +255,9 @@ function initClipLive(root) {
       const [, trackName, idx] = TRACKS[sel.selectedIndex];
       updatePlayhead = buildCurve(clip, trackName, idx);
     }
-    const t = Math.min(snap.time, snap.duration);
-    const v = updatePlayhead(t);
-    nameEl.textContent = `${snap.clip} · t=${t.toFixed(2)}s · 值=${v.toFixed(3)}`;
+    const time = Math.min(snap.time, snap.duration);
+    const v = updatePlayhead(time);
+    nameEl.textContent = `${snap.clip} · t=${time.toFixed(2)}s · ${t('index.js.clip.valueEq')}${v.toFixed(3)}`;
   });
 
   sel.addEventListener('change', () => { curClip = null; }); // 强制重建曲线

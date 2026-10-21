@@ -2,6 +2,7 @@
 // 数据全部来自正在运行的原版引擎移植实例的 debugFrame()，不是模拟。
 import { createGrokBot } from '../vendor/grok-player.js';
 import { rafLoop } from '../lib.js';
+import { t } from '../i18n/i18n.js';
 
 const SVGNS = 'http://www.w3.org/2000/svg';
 const el = (tag, attrs = {}, parent) => {
@@ -11,25 +12,25 @@ const el = (tag, attrs = {}, parent) => {
 };
 
 const STATES = [
-  ['idle', '无装饰'],
-  ['thinking', 'dots 装饰'],
-  ['waiting', 'orbit 装饰'],
-  ['alerting', 'bang 装饰'],
+  ['idle', t('index.js.springs.tipIdle')],
+  ['thinking', t('index.js.springs.tipThinking')],
+  ['waiting', t('index.js.springs.tipWaiting')],
+  ['alerting', t('index.js.springs.tipAlerting')],
 ];
 const SPAN = 6; // 曲线窗口 6 秒
 
 // name, color, 取值 → [0,1] 归一化（目标虚线：amount 由按钮点击记录，swap 恒为 1，spin 无）
 const LANES = [
   {
-    key: 'amount', label: 'amount · 装饰模式总进度', color: '#1d9e59',
+    key: 'amount', label: t('index.js.springs.laneAmount'), color: '#1d9e59',
     norm: (v) => v, fmt: (v) => v.toFixed(3),
   },
   {
-    key: 'swap', label: 'swap · 新旧装饰交叉淡化', color: '#2e6bff',
+    key: 'swap', label: t('index.js.springs.laneSwap'), color: '#2e6bff',
     norm: (v) => v, fmt: (v) => v.toFixed(3),
   },
   {
-    key: 'spin', label: 'spin · 入场半转身（弧度）', color: '#e07020',
+    key: 'spin', label: t('index.js.springs.laneSpin'), color: '#e07020',
     norm: (v) => wrapPi(v) / Math.PI / 2 + 0.5, // [-π,π] → [0,1]，中间=0
     fmt: (v) => `${(v / Math.PI).toFixed(2)}π`,
   },

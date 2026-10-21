@@ -3,6 +3,25 @@
 import {
   CANVAS_CENTER as X, ac, eh, hull, polyD, hullLoss,
 } from '../lib-shapes.js';
+import { t } from '../i18n/i18n.js';
+
+// 生成代码里的中文注释：英文模式按片段替换（zh 原样）
+const CODE_PHRASES = [
+  ['规则多边形 → 一行搞定', 'workshop.js.code.regular'],
+  ['自由顶点 → ac(点数组, 圆角)', 'workshop.js.code.freeVerts'],
+  ['凸 → solid（最省事）', 'workshop.js.code.ivSolid'],
+  ['seat 是 wrap 型：眼睛绕柱面包裹', 'workshop.js.code.seatWrap'],
+  ['凹 + 有厚度 → extrusion', 'workshop.js.code.ivExtr'],
+  ['← 平面正脸', 'workshop.js.code.flatFront'],
+  ['凹 + 鼓起来 → loft', 'workshop.js.code.ivLoft'],
+  ['← 眼睛贴放样面', 'workshop.js.code.hugLoft'],
+  ['或：moon', 'workshop.js.code.orMoon'],
+  ['← 漏了这个会静默变球！', 'workshop.js.code.namesWarn'],
+  ['从相近形状抄，主要调 shiftY', 'workshop.js.code.copyMetrics'],
+  ['选形状面板的清单', 'workshop.js.code.pickerList'],
+  ['UI 名 → 引擎名', 'workshop.js.code.uiToEngine'],
+];
+const trCode = (s) => CODE_PHRASES.reduce((out, [zh, key]) => out.replaceAll(zh, t(key)), s);
 
 const TAU = Math.PI * 2;
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
@@ -67,18 +86,29 @@ function dropPts() {
 }
 
 const PRESETS = {
-  六边形: { pts: () => regular(6, 120, Math.PI / 6), r: 18 },
-  正方形: { pts: () => regular(4, 120, Math.PI / 4), r: 26 },
-  三角形: { pts: () => regular(3, 130, -Math.PI / 2), r: 30 },
-  五角星: { pts: () => starPts(5, 130, 54), r: 6 },
-  齿轮: { pts: () => gearPts(8, 125, 98), r: 5 },
-  云朵: { pts: cloudPts, r: 0 },
-  水滴: { pts: dropPts, r: 24 },
-  盾牌: {
+  hexagon: { pts: () => regular(6, 120, Math.PI / 6), r: 18 },
+  square: { pts: () => regular(4, 120, Math.PI / 4), r: 26 },
+  triangle: { pts: () => regular(3, 130, -Math.PI / 2), r: 30 },
+  star: { pts: () => starPts(5, 130, 54), r: 6 },
+  gear: { pts: () => gearPts(8, 125, 98), r: 5 },
+  cloud: { pts: cloudPts, r: 0 },
+  drop: { pts: dropPts, r: 24 },
+  shield: {
     pts: () => [[CX - 110, CY - 90], [CX + 110, CY - 90], [CX + 110, CY + 20],
       [CX, CY + 140], [CX - 110, CY + 20]],
     r: 20,
   },
+};
+// 预设按钮显示名走 i18n
+const PRESET_LABEL = {
+  hexagon: t('workshop.js.preset.hexagon'),
+  square: t('workshop.js.preset.square'),
+  triangle: t('workshop.js.preset.triangle'),
+  star: t('workshop.js.preset.star'),
+  gear: t('workshop.js.preset.gear'),
+  cloud: t('workshop.js.preset.cloud'),
+  drop: t('workshop.js.preset.drop'),
+  shield: t('workshop.js.preset.shield'),
 };
 
 let verts = [], radii = [], sel = -1, drag = -1;
@@ -124,12 +154,12 @@ export function init(root) {
 
     if (concave) {
       verdict.className = 'wb-verdict bad';
-      verdict.innerHTML = `形状有凹 · 凸包会吃掉 <b>${(loss * 100).toFixed(1)}%</b> 的面积
-        <small>→ 必须用 <code>extrusion</code> 或 <code>loft</code>，不能用 <code>solid</code></small>`;
+      verdict.innerHTML = `${t('workshop.js.verdict.concave1')}<b>${(loss * 100).toFixed(1)}%</b>${t('workshop.js.verdict.concave2')}
+        <small>${t('workshop.js.verdict.concave3')}<code>extrusion</code>${t('workshop.js.verdict.concave4')}<code>loft</code>${t('workshop.js.verdict.concave5')}<code>solid</code></small>`;
     } else {
       verdict.className = 'wb-verdict ok';
-      verdict.innerHTML = `形状是凸的 · 凸包面积比 <b>${((1 - loss) * 100).toFixed(1)}%</b>
-        <small>→ <code>solid</code> 可以用，也可以走 extrusion / loft</small>`;
+      verdict.innerHTML = `${t('workshop.js.verdict.convex1')}<b>${((1 - loss) * 100).toFixed(1)}%</b>
+        <small>${t('workshop.js.verdict.convex2')}<code>solid</code>${t('workshop.js.verdict.convex3')}</small>`;
     }
     renderCode(concave, loss);
   }
@@ -220,23 +250,23 @@ function wN(e) {              // UI 名 → 引擎名
 }`;
 
     const blocks = [
-      ['① Mv —— 路径生成器', gen],
-      ['② Iv —— 描述符（含 seat）', iv],
-      ['③ iS —— 3D 实体（可选，只给 isProof 光照用）', iS],
-      ['④ recipes —— shapes.names + eyeMetrics', dataBlk],
-      ['⑤ UI —— 形状清单 + 别名 + 三语文案', ui],
+      [t('workshop.js.code.h1'), gen],
+      [t('workshop.js.code.h2'), iv],
+      [t('workshop.js.code.h3'), iS],
+      [t('workshop.js.code.h4'), dataBlk],
+      [t('workshop.js.code.h5'), ui],
     ];
     codeOut.innerHTML = blocks.map(([h, body]) => `
       <div class="code-blk">
-        <div class="ch"><span>${h}</span><button data-copy>复制</button></div>
-        <pre class="code">${body}</pre>
+        <div class="ch"><span>${h}</span><button data-copy>${t('workshop.js.copy')}</button></div>
+        <pre class="code">${trCode(body)}</pre>
       </div>`).join('');
     codeOut.querySelectorAll('[data-copy]').forEach((b) => {
       b.addEventListener('click', () => {
         const txt = b.closest('.code-blk').querySelector('pre').innerText;
         navigator.clipboard?.writeText(txt);
-        b.textContent = '已复制';
-        setTimeout(() => { b.textContent = '复制'; }, 1200);
+        b.textContent = t('workshop.js.copied');
+        setTimeout(() => { b.textContent = t('workshop.js.copy'); }, 1200);
       });
     });
     // 损失数字用在提示里，保证与判定一致
@@ -246,7 +276,8 @@ function wN(e) {              // UI 名 → 引擎名
   // ---------- 预设 ----------
   Object.entries(PRESETS).forEach(([name, def]) => {
     const b = document.createElement('button');
-    b.textContent = name;
+    b.textContent = PRESET_LABEL[name];
+    b.dataset.preset = name;
     b.addEventListener('click', () => load(name));
     presetsBox.appendChild(b);
   });
@@ -263,7 +294,7 @@ function wN(e) {              // UI 名 → 引擎名
     cSel.disabled = true;
     root.querySelector('.wb-sel-v').textContent = '—';
     presetsBox.querySelectorAll('button').forEach((b) => {
-      b.setAttribute('aria-pressed', String(b.textContent === name));
+      b.setAttribute('aria-pressed', String(b.dataset.preset === name));
     });
     render();
   }
@@ -347,5 +378,5 @@ function wN(e) {              // UI 名 → 引擎名
   });
   showHull.addEventListener('change', render);
 
-  load('五角星');
+  load('star');
 }

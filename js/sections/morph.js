@@ -1,5 +1,6 @@
 // 第 2 节：径向轮廓 morph —— 向 N 个角度发射线求交点得 r(θ)，逐角度 lerp
 import { smoothClosedPath } from '../lib.js';
+import { t } from '../i18n/i18n.js';
 
 const SVGNS = 'http://www.w3.org/2000/svg';
 const f = (n) => Math.round(n * 100) / 100;
@@ -85,10 +86,10 @@ export function init(root) {
   const label = root.querySelector('.morph-label');
 
   const SHAPES = [
-    { name: 'circle 圆形', poly: circlePoly() },
-    { name: 'star6 六角星', poly: starPoly() },
-    { name: 'heart 爱心', poly: heartPoly() },
-    { name: 'teardrop 水滴', poly: teardropPoly() },
+    { name: t('index.js.morph.shapeCircle'), poly: circlePoly() },
+    { name: t('index.js.morph.shapeStar'), poly: starPoly() },
+    { name: t('index.js.morph.shapeHeart'), poly: heartPoly() },
+    { name: t('index.js.morph.shapeTeardrop'), poly: teardropPoly() },
   ];
   const C = 210, SCALE = 2.6;
   let cache = {}; // n -> per-shape r arrays

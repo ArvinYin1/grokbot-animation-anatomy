@@ -4,6 +4,7 @@
 //   t → 0（睁）  t + 0.26×0.45 → 1（闭）  t + 0.26 → 0（睁），ease [.42,0,.58,1]
 // 下方时间轴直接画 grok-recipes.json 里 Idle_A/B/D 的真实事件；右侧跑真 player。
 import { createGrokBot } from '../vendor/grok-player.js';
+import { t } from '../i18n/i18n.js';
 
 const BLINK_DUR = 0.26; // na：一次眨眼的总时长（秒）
 const SHOWN = ['Idle_A', 'Idle_B', 'Idle_D'];
@@ -11,7 +12,7 @@ const SHOWN = ['Idle_A', 'Idle_B', 'Idle_D'];
 export function init(root) {
   const bot = createGrokBot(root.querySelector('.stage'), { size: 240, state: 'idle', seed: 'blink-demo' });
   const nowEl = root.querySelector('.clip-now');
-  setInterval(() => { nowEl.textContent = `当前 clip：${bot.clip ?? '—'}`; }, 300);
+  setInterval(() => { nowEl.textContent = `${t('index.js.blink.nowClip')}${bot.clip ?? '—'}`; }, 300);
   root.querySelector('[data-blink-now]').addEventListener('click', () => bot.blink());
 
   fetch('js/vendor/grok-recipes.json')
@@ -36,7 +37,7 @@ export function init(root) {
           mark.className = 'blink-mark' + (isDouble ? ' double' : '');
           mark.style.left = `${(e.t / clip.duration) * 100}%`;
           mark.style.width = `${(BLINK_DUR / clip.duration) * 100}%`;
-          mark.title = `t=${e.t.toFixed(2)}s（${BLINK_DUR}s，45% 处闭合）`;
+          mark.title = `t=${e.t.toFixed(2)}s${t('index.js.blink.markA')}${BLINK_DUR}${t('index.js.blink.markB')}`;
           track.appendChild(mark);
         });
         row.append(label, track);

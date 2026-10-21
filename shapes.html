@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-theme="light">
+<html lang="zh-CN" data-theme="light" data-page="shapes">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,10 +18,10 @@
 <header class="topbar">
   <a class="topbar__brand" href="index.html">
     <span class="topbar__mark"></span>
-    GrokBot 解剖
+    <span data-i18n="common.brand">GrokBot 解剖</span>
   </a>
   <div class="topbar__end">
-    <button class="icon-btn" data-theme-toggle title="切换主题" aria-label="切换主题">
+    <button class="icon-btn" data-theme-toggle title="切换主题" aria-label="切换主题" data-i18n-attrs="title:common.theme.toggle;aria-label:shapes.theme.toggleAria">
       <svg data-icon-moon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/></svg>
       <svg data-icon-sun viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="display:none"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
     </button>
@@ -32,45 +32,45 @@
 
   <aside class="sidebar">
     <div class="sidebar__group">
-      <p class="sidebar__label">解析</p>
-      <a class="sidebar__item" href="index.html">总览</a>
-      <a class="sidebar__item" href="shapes.html" aria-current="page">形状系统</a>
+      <p class="sidebar__label" data-i18n="common.nav.groupAnalysis">解析</p>
+      <a class="sidebar__item" href="index.html" data-i18n="common.nav.overview">总览</a>
+      <a class="sidebar__item" href="shapes.html" aria-current="page" data-i18n="common.nav.shapes">形状系统</a>
     </div>
     <div class="sidebar__group">
-      <p class="sidebar__label">工具</p>
-      <a class="sidebar__item" href="workshop.html">形状工作台</a>
-      <a class="sidebar__item" href="editor.html">动画编辑器</a>
-      <a class="sidebar__item" href="glow.html">Glow Lab</a>
+      <p class="sidebar__label" data-i18n="common.nav.groupTools">工具</p>
+      <a class="sidebar__item" href="workshop.html" data-i18n="common.nav.workshop">形状工作台</a>
+      <a class="sidebar__item" href="editor.html" data-i18n="common.nav.editor">动画编辑器</a>
+      <a class="sidebar__item" href="glow.html" data-i18n="common.nav.glow">Glow Lab</a>
     </div>
   </aside>
 
   <main class="content prose">
 
     <div class="page-head">
-      <p class="page-head__eyebrow">解析 · 形状系统</p>
-      <h1>25 个头像形状，是怎么被造出来的</h1>
-      <p class="page-head__lede">
+      <p class="page-head__eyebrow" data-i18n="shapes.hero.eyebrow">解析 · 形状系统</p>
+      <h1 data-i18n="shapes.hero.title">25 个头像形状，是怎么被造出来的</h1>
+      <p class="page-head__lede" data-i18n="shapes.hero.lede">
         它们不是 25 张手画的图，而是 <strong>25 段参数</strong> + <strong>4 张表</strong> +
         <strong>3 种轮廓算法</strong>。而且有一条可以验证的硬约束：
         <strong>有一类形状天生不可能做出凹形。</strong>下面每一节都有一个能动的演示。
       </p>
       <p style="margin-top:16px;display:flex;gap:8px">
-        <span class="badge badge--accent">25 个形状</span>
-        <span class="badge">3 种 silhouette</span>
-        <span class="badge badge--success">0 处例外</span>
+        <span class="badge badge--accent" data-i18n="shapes.hero.badgeShapes">25 个形状</span>
+        <span class="badge" data-i18n="shapes.hero.badgeSilhouettes">3 种 silhouette</span>
+        <span class="badge badge--success" data-i18n="shapes.hero.badgeExceptions">0 处例外</span>
       </p>
     </div>
 
     <!-- ============ 01 流水线 ============ -->
     <section id="s1">
-      <h2>全景：一条五级流水线</h2>
-      <p>点任意一级，看它负责什么。<strong>关键在第 5 级</strong>：同一个形状描述符会被分派给
+      <h2 data-i18n="shapes.pipeline.title">全景：一条五级流水线</h2>
+      <p data-i18n="shapes.pipeline.lede">点任意一级，看它负责什么。<strong>关键在第 5 级</strong>：同一个形状描述符会被分派给
         三种轮廓算法之一，用哪一种决定了这个形状能不能有凹形。</p>
 
       <div class="pipeline"></div>
       <pre class="code pipeline-code"></pre>
 
-      <div class="keynote">
+      <div class="keynote" data-i18n="shapes.pipeline.keynote">
         <b>一句话：</b>形状 = 一条参数化路径 → 一个描述符（<code>silhouette</code> +
         <code>seat</code>）→ 交给 <code>Zv()</code> 按 kind 分派到
         <b>凸包 / 环间四边形 / 环缝合</b>。
@@ -79,11 +79,11 @@
 
     <!-- ============ 02 实验室 ============ -->
     <section id="s2">
-      <h2>形状 = 两三个数字 + 4 个图元</h2>
-      <p>每个形状在 <code>Mv</code> 表里就是一个吃掉 2~3 个数字的函数。比如六边形只要
+      <h2 data-i18n="shapes.primitives.title">形状 = 两三个数字 + 4 个图元</h2>
+      <p data-i18n="shapes.primitives.lede">每个形状在 <code>Mv</code> 表里就是一个吃掉 2~3 个数字的函数。比如六边形只要
         「半径 / 边数 / 圆角」，云朵只要「5 个圆」，圆角方和宝石是<strong>同一个公式换一个指数</strong>。</p>
 
-      <pre class="code">// Mv 表：每个形状一个生成器，参数只有 2~3 个数字
+      <pre class="code" data-i18n="shapes.primitives.code">// Mv 表：每个形状一个生成器，参数只有 2~3 个数字
 hex:      () =&gt; eh(114, 6, 20, Math.PI/6)       // 正 n 边形 + 圆角
 cloud:    () =&gt; th([[x-62,x+26,56], [x+62,x+26,54], [x,x+34,62],
                      [x-24,x-30,62], [x+38,x-26,54]])   // 5 个圆的并集
@@ -93,7 +93,7 @@ egg:      () =&gt; av(98, 113, .22)
 house:    () =&gt; lv(100, 110, 78, 29)
 heart:    () =&gt; "M79.4511 11.5693C94.8767…"     // 唯一一个手写的</pre>
 
-      <div class="keynote">
+      <div class="keynote" data-i18n="shapes.primitives.keynote">
         <b>4 个基础图元：</b>
         <code>ev</code>（Catmull-Rom 平滑闭合）·
         <code>ac</code>（圆角多边形，<b>圆角可逐顶点给</b>）·
@@ -102,8 +102,8 @@ heart:    () =&gt; "M79.4511 11.5693C94.8767…"     // 唯一一个手写的</p
         <code>eh</code> / <code>El</code> / <code>uv</code> / <code>lv</code> 这些具名形状都是它们拼出来的。
       </div>
 
-      <h3>实验室：拖滑块，看形状怎么变</h3>
-      <p>左边选形状、拖参数，右边实时重绘 —— 全部按引擎的图元公式算。</p>
+      <h3 data-i18n="shapes.primitives.labTitle">实验室：拖滑块，看形状怎么变</h3>
+      <p data-i18n="shapes.primitives.labLede">左边选形状、拖参数，右边实时重绘 —— 全部按引擎的图元公式算。</p>
 
       <div class="lab">
         <div>
@@ -115,8 +115,8 @@ heart:    () =&gt; "M79.4511 11.5693C94.8767…"     // 唯一一个手写的</p
         <div class="lab-stage-main"></div>
       </div>
 
-      <h3>对账：公式的输出 vs App 的真实输出</h3>
-      <p>左列是<strong>直接 import 原 bundle、调用它自己的渲染函数</strong>输出后提取的真实轮廓，
+      <h3 data-i18n="shapes.primitives.reconTitle">对账：公式的输出 vs App 的真实输出</h3>
+      <p data-i18n="shapes.primitives.reconLede">左列是<strong>直接 import 原 bundle、调用它自己的渲染函数</strong>输出后提取的真实轮廓，
         右列是同一条公式的重绘。两者姿态不同 —— App 的输出带<strong>静止姿态的旋转 + 3D 投影</strong>
         （所以方块看起来是斜的）—— 但形状是同一个。</p>
       <div class="recon"></div>
@@ -125,11 +125,11 @@ heart:    () =&gt; "M79.4511 11.5693C94.8767…"     // 唯一一个手写的</p
 
     <!-- ============ 03 三种轮廓算法 ============ -->
     <section id="s3">
-      <h2>三种 silhouette → 三种轮廓算法</h2>
-      <p>描述符里的 <code>silhouette.kind</code> 只有三种，<code>Zv()</code> 按它分派。
+      <h2 data-i18n="shapes.silhouette.title">三种 silhouette → 三种轮廓算法</h2>
+      <p data-i18n="shapes.silhouette.lede">描述符里的 <code>silhouette.kind</code> 只有三种，<code>Zv()</code> 按它分派。
         这是整套设计里最关键的一个分支：</p>
 
-      <pre class="code">function Zv(silhouette, view) {
+      <pre class="code" data-i18n="shapes.silhouette.code">function Zv(silhouette, view) {
   if (silhouette.kind === "loft")  return [eS(silhouette.rings, view)];   // 环 → 缝合
   if (silhouette.kind === "solid") return [Qv(silhouette, view)];         // 点云 → 凸包
   // extrusion：逐环投影，环间连四边形
@@ -137,11 +137,11 @@ heart:    () =&gt; "M79.4511 11.5693C94.8767…"     // 唯一一个手写的</p
   s.push([a[u], a[l], c[l], c[u]]);
 }</pre>
 
-      <h3>25 个形状按算法分组</h3>
-      <p>绿色徽标 = 凸形，橙色 = 有凹形。看第一组 —— <strong>一个凹的都没有</strong>。</p>
+      <h3 data-i18n="shapes.silhouette.galleryTitle">25 个形状按算法分组</h3>
+      <p data-i18n="shapes.silhouette.galleryLede">绿色徽标 = 凸形，橙色 = 有凹形。看第一组 —— <strong>一个凹的都没有</strong>。</p>
       <div class="gallery-3"></div>
 
-      <div class="keynote warn">
+      <div class="keynote warn" data-i18n="shapes.silhouette.keynote">
         <b>但注意方向。</b>「凹 ⟹ 不能用 solid」是成立的；反过来「凸 ⟹ 只能用 solid」
         <b>不成立</b>。数据里有 3 个形状（<code>hex</code> / <code>square</code> /
         <code>house</code>）实测是凸的，却仍然走 <code>extrusion</code> ——
@@ -152,13 +152,13 @@ heart:    () =&gt; "M79.4511 11.5693C94.8767…"     // 唯一一个手写的</p
 
     <!-- ============ 04 凸包约束 ============ -->
     <section id="s4">
-      <h2>核心洞察：凸包会「吃掉」凹形</h2>
-      <p>浅色是 App 渲染的真实轮廓。切换开关，看把它交给 <code>solid</code> 的凸包算法之后会怎样。</p>
+      <h2 data-i18n="shapes.hull.title">核心洞察：凸包会「吃掉」凹形</h2>
+      <p data-i18n="shapes.hull.lede">浅色是 App 渲染的真实轮廓。切换开关，看把它交给 <code>solid</code> 的凸包算法之后会怎样。</p>
 
       <div class="ctl-row" style="margin:18px 0">
         <div class="toggle hull-toggle">
-          <button data-mode="real" aria-pressed="true">真实轮廓（extrusion / loft）</button>
-          <button data-mode="hull" aria-pressed="false">如果交给 solid 的凸包</button>
+          <button data-mode="real" aria-pressed="true" data-i18n="shapes.hull.modeReal">真实轮廓（extrusion / loft）</button>
+          <button data-mode="hull" aria-pressed="false" data-i18n="shapes.hull.modeHull">如果交给 solid 的凸包</button>
         </div>
         <span class="hint hull-note" style="margin:0"></span>
       </div>
@@ -167,7 +167,7 @@ heart:    () =&gt; "M79.4511 11.5693C94.8767…"     // 唯一一个手写的</p
       <p class="hint hull-measured" style="margin-top:16px"></p>
       <p class="hull-text"></p>
 
-      <div class="keynote">
+      <div class="keynote" data-i18n="shapes.hull.keynote">
         <b>这就是那个可验证的硬约束：</b><code>solid</code> 的轮廓算法是凸包
         （<code>pi()</code>，Andrew 单调链），而凸包在数学上不可能产生凹形。
         所以任何需要凹口 / 凹槽的形状，在设计上<b>必须</b>走 <code>extrusion</code> 或
@@ -177,8 +177,8 @@ heart:    () =&gt; "M79.4511 11.5693C94.8767…"     // 唯一一个手写的</p
 
     <!-- ============ 05 环结构 ============ -->
     <section id="s5">
-      <h2>环是怎么造的</h2>
-      <p>除了 <code>solid</code> 家族，另外两种都要先造出一叠<strong>环</strong>（rings），再把环投影。
+      <h2 data-i18n="shapes.rings.title">环是怎么造的</h2>
+      <p data-i18n="shapes.rings.lede">除了 <code>solid</code> 家族，另外两种都要先造出一叠<strong>环</strong>（rings），再把环投影。
         两套公式完全不同 —— 拖滑块看环叠怎么变形。</p>
 
       <div class="rings">
@@ -186,17 +186,17 @@ heart:    () =&gt; "M79.4511 11.5693C94.8767…"     // 唯一一个手写的</p
           <div>
             <div class="shape-group" style="margin:0 0 14px;padding:0;border:0;background:none">
               <div class="gh"><span class="kind cc">extrusion</span>
-                <span class="gsub">倒角挤出 · <code>Nv()</code></span></div>
+                <span class="gsub" data-i18n="shapes.rings.extrusionSub">倒角挤出 · <code>Nv()</code></span></div>
             </div>
             <div class="ctl">
-              <label>半深 halfDepth <b class="nv-depth-v">0.36</b></label>
+              <label><span data-i18n="shapes.rings.halfDepth">半深 halfDepth</span> <b class="nv-depth-v">0.36</b></label>
               <input type="range" class="nv-depth" min="0.05" max="0.9" step="0.01" value="0.36">
             </div>
             <div class="ctl">
-              <label>倒角 bevel <b class="nv-bevel-v">0.22</b></label>
+              <label><span data-i18n="shapes.rings.bevel">倒角 bevel</span> <b class="nv-bevel-v">0.22</b></label>
               <input type="range" class="nv-bevel" min="0" max="0.6" step="0.01" value="0.22">
             </div>
-            <pre class="code">// 轮廓朝自己中心缩，同时往 ±z 走
+            <pre class="code" data-i18n="shapes.rings.extrusionCode">// 轮廓朝自己中心缩，同时往 ±z 走
 p = f/Ar*(Math.PI/2);            // Ar = 4
 z     = ±(halfDepth - bevel + bevel*sin(p))
 scale = 1 - bevel/u*(1 - cos(p))  // u = 最小半轴</pre>
@@ -208,17 +208,17 @@ scale = 1 - bevel/u*(1 - cos(p))  // u = 最小半轴</pre>
           <div>
             <div class="shape-group" style="margin:0 0 14px;padding:0;border:0;background:none">
               <div class="gh"><span class="kind cc">loft</span>
-                <span class="gsub">放样 · <code>zv()</code></span></div>
+                <span class="gsub" data-i18n="shapes.rings.loftSub">放样 · <code>zv()</code></span></div>
             </div>
             <div class="ctl">
-              <label>深度 depth <b class="zv-depth-v">0.72</b></label>
+              <label><span data-i18n="shapes.rings.depth">深度 depth</span> <b class="zv-depth-v">0.72</b></label>
               <input type="range" class="zv-depth" min="0.1" max="1.2" step="0.01" value="0.72">
             </div>
             <div class="ctl">
-              <label>收缩指数 rh <b class="zv-rh-v">0.72</b></label>
+              <label><span data-i18n="shapes.rings.rh">收缩指数 rh</span> <b class="zv-rh-v">0.72</b></label>
               <input type="range" class="zv-rh" min="0.25" max="1.6" step="0.01" value="0.72">
             </div>
-            <pre class="code">// 上下收成一个点，cos^rh 决定多「鼓」
+            <pre class="code" data-i18n="shapes.rings.loftCode">// 上下收成一个点，cos^rh 决定多「鼓」
 d     = -PI/2 + PI*l/$l;      // $l = 16
 scale = max(0, cos(d))^rh
 z     = depth * sin(d)
@@ -228,7 +228,7 @@ z     = depth * sin(d)
         </div>
       </div>
 
-      <div class="keynote">
+      <div class="keynote" data-i18n="shapes.rings.keynote">
         <b>两者的分工：</b><code>extrusion</code> 有<b>明确厚度</b>、边缘倒角收圆
         （方、六角、星、齿轮、房子）；<code>loft</code> 在赤道最胖、上下收成一个点，
         像枕头 / 云 / 心。凹形状选哪个，取决于你想要「一块板」还是「一个包」。
@@ -237,30 +237,30 @@ z     = depth * sin(d)
 
     <!-- ============ 06 球链 ============ -->
     <section id="s6">
-      <h2>球链家族：bean / tablet / capsule</h2>
-      <p>这三个<strong>完全不生成路径</strong> —— 它们用一串球当轮廓（<code>silhouette.balls</code>，
+      <h2 data-i18n="shapes.balls.title">球链家族：bean / tablet / capsule</h2>
+      <p data-i18n="shapes.balls.lede">这三个<strong>完全不生成路径</strong> —— 它们用一串球当轮廓（<code>silhouette.balls</code>，
         <code>samples</code> 是空的），最后靠<strong>射线和圆求交</strong>得到并集边界。
         所以它们也归 <code>solid</code> 家族，同样只能凸。</p>
 
       <div class="rings">
         <div class="shape-group" style="margin:0">
           <div class="gh"><span class="kind">tablet / capsule</span>
-            <span class="gsub">沿轴排一串球 · <code>jl()</code> · <code>Rl = 33</code></span></div>
-          <pre class="code">function jl(name, axis) {
+            <span class="gsub" data-i18n="shapes.balls.tabletSub">沿轴排一串球 · <code>jl()</code> · <code>Rl = 33</code></span></div>
+          <pre class="code" data-i18n="shapes.balls.tabletCode">function jl(name, axis) {
   for (f = 0; f &lt; 33; f++) {
     h = lo + (hi-lo) * (f/32);
     push(axis === "x" ? [h,0,0,c] : [0,h,0,c]);
   }   // 半径 c = 短半轴
 }</pre>
           <div class="lab-stage balls-tablet" style="min-height:260px"></div>
-          <p class="hint">引擎用 33 个球；图中画 11 个便于看清「一串球」。主轴由 PCA 求出，
+          <p class="hint" data-i18n="shapes.balls.tabletNote">引擎用 33 个球；图中画 11 个便于看清「一串球」。主轴由 PCA 求出，
             所以球链是沿形状自己的长轴走的。</p>
         </div>
 
         <div class="shape-group" style="margin:0">
           <div class="gh"><span class="kind">bean</span>
-            <span class="gsub">最大内切球 · <code>Lv()</code></span></div>
-          <pre class="code">function Lv(name) {
+            <span class="gsub" data-i18n="shapes.balls.beanSub">最大内切球 · <code>Lv()</code></span></div>
+          <pre class="code" data-i18n="shapes.balls.beanCode">function Lv(name) {
   for (网格点 p of 包围盒) {
     if (!点在轮廓内(p)) continue;
     r = min(到轮廓每条边的距离);
@@ -269,12 +269,12 @@ z     = depth * sin(d)
   // 按半径降序，贪心丢掉被大球包住的
 }</pre>
           <div class="lab-stage balls-bean" style="min-height:260px"></div>
-          <p class="hint">对 App 真实轮廓跑内切球算法，网格步长 = 最大尺寸 / 40。</p>
+          <p class="hint" data-i18n="shapes.balls.beanNote">对 App 真实轮廓跑内切球算法，网格步长 = 最大尺寸 / 40。</p>
         </div>
       </div>
 
-      <h3>轮廓怎么从球算出来</h3>
-      <pre class="code">// Qv()：一圈方向，每个方向取所有球的最远交点 = 并集边界
+      <h3 data-i18n="shapes.balls.outlineTitle">轮廓怎么从球算出来</h3>
+      <pre class="code" data-i18n="shapes.balls.outlineCode">// Qv()：一圈方向，每个方向取所有球的最远交点 = 并集边界
 for (const dir of DIRECTIONS) {
   let best = 0;
   for (const ball of balls) {
@@ -289,8 +289,8 @@ for (const dir of DIRECTIONS) {
 
     <!-- ============ 07 seat ============ -->
     <section id="s7">
-      <h2>眼睛落在形状表面的哪里：<code>seat</code></h2>
-      <p>轮廓做好了，眼睛还得「贴」上去。描述符里第三个字段 <code>seat</code> 就是干这个的。
+      <h2 data-i18n="shapes.seat.title">眼睛落在形状表面的哪里：<code>seat</code></h2>
+      <p data-i18n="shapes.seat.lede">轮廓做好了，眼睛还得「贴」上去。描述符里第三个字段 <code>seat</code> 就是干这个的。
         <strong>这就是为什么换形状之后，眼睛不会飘在体外。</strong></p>
 
       <div class="shape-grid c4 seat-demo" style="margin-top:18px"></div>
@@ -298,23 +298,23 @@ for (const dir of DIRECTIONS) {
       <table class="tbl seat-tbl">
         <thead>
           <tr>
-            <th style="width:90px">kind</th>
-            <th style="width:200px">字段</th>
-            <th style="width:290px">含义</th>
-            <th>谁在用</th>
+            <th style="width:90px" data-i18n="shapes.seat.colKind">kind</th>
+            <th style="width:200px" data-i18n="shapes.seat.colField">字段</th>
+            <th style="width:290px" data-i18n="shapes.seat.colMeaning">含义</th>
+            <th data-i18n="shapes.seat.colUsedBy">谁在用</th>
           </tr>
         </thead>
         <tbody></tbody>
       </table>
 
-      <p class="hint" style="margin-top:14px">球链形状还额外带 <code>puffAt</code>，
+      <p class="hint" style="margin-top:14px" data-i18n="shapes.seat.note">球链形状还额外带 <code>puffAt</code>，
         让眼睛在球与球之间的凹陷处也能贴合。</p>
     </section>
 
     <!-- ============ 08 速查表 ============ -->
     <section id="s8">
-      <h2>速查表</h2>
-      <p>25 个形状的完整分派。<strong>凸/凹</strong>与<strong>凸包损失</strong>两列是实测值 ——
+      <h2 data-i18n="shapes.ref.title">速查表</h2>
+      <p data-i18n="shapes.ref.lede">25 个形状的完整分派。<strong>凸/凹</strong>与<strong>凸包损失</strong>两列是实测值 ——
         对 App 自己渲染出来的轮廓跑凸包算出来的，不是抄的。</p>
 
       <div class="keynote ok ref-verify"></div>
@@ -323,15 +323,15 @@ for (const dir of DIRECTIONS) {
         <table class="tbl ref-tbl">
           <thead>
             <tr>
-              <th style="width:88px">形状</th>
-              <th style="width:110px">引擎名</th>
-              <th style="width:230px">Mv 生成器</th>
-              <th style="width:96px">silhouette</th>
-              <th style="width:130px">轮廓算法</th>
-              <th style="width:150px">seat</th>
-              <th style="width:96px">size</th>
-              <th style="width:56px">凸/凹</th>
-              <th style="width:78px">凸包损失</th>
+              <th style="width:88px" data-i18n="shapes.ref.colShape">形状</th>
+              <th style="width:110px" data-i18n="shapes.ref.colEngine">引擎名</th>
+              <th style="width:230px" data-i18n="shapes.ref.colGenerator">Mv 生成器</th>
+              <th style="width:96px" data-i18n="shapes.ref.colSilhouette">silhouette</th>
+              <th style="width:130px" data-i18n="shapes.ref.colAlgorithm">轮廓算法</th>
+              <th style="width:150px" data-i18n="shapes.ref.colSeat">seat</th>
+              <th style="width:96px" data-i18n="shapes.ref.colSize">size</th>
+              <th style="width:56px" data-i18n="shapes.ref.colConvex">凸/凹</th>
+              <th style="width:78px" data-i18n="shapes.ref.colHullLoss">凸包损失</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -341,18 +341,18 @@ for (const dir of DIRECTIONS) {
 
     <!-- ============ 结尾 ============ -->
     <section id="s9">
-      <h2>数据来源与自检</h2>
+      <h2 data-i18n="shapes.sources.title">数据来源与自检</h2>
       <ul class="checklist">
-        <li>25 条<strong>真实轮廓</strong>：直接 import 原 bundle 的渲染函数（<code>jE</code>/<code>a6</code>）
+        <li data-i18n="shapes.sources.item1">25 条<strong>真实轮廓</strong>：直接 import 原 bundle 的渲染函数（<code>jE</code>/<code>a6</code>）
           渲染后提取的路径数据，因此带着引擎静止姿态的旋转与 3D 投影。</li>
-        <li><strong>凸/凹与凸包损失</strong>：对该轮廓跑 Andrew 单调链凸包，比较面积 —— 页面上的数字是实时算的。</li>
-        <li><strong>几何层</strong>：<code>js/lib-shapes.js</code> 是原 bundle 的逐函数移植
+        <li data-i18n="shapes.sources.item2"><strong>凸/凹与凸包损失</strong>：对该轮廓跑 Andrew 单调链凸包，比较面积 —— 页面上的数字是实时算的。</li>
+        <li data-i18n="shapes.sources.item3"><strong>几何层</strong>：<code>js/lib-shapes.js</code> 是原 bundle 的逐函数移植
           （<code>gn</code>/<code>ev</code>/<code>ar</code>/<code>ac</code>/<code>eh</code>/
           <code>th</code>/<code>El</code>/<code>pi</code>/<code>Nv</code>/<code>zv</code>）。</li>
-        <li><strong>对账</strong>：02 节的径向剖面残差也是页面实时算的 —— 用旋转/缩放无关的度量，
+        <li data-i18n="shapes.sources.item4"><strong>对账</strong>：02 节的径向剖面残差也是页面实时算的 —— 用旋转/缩放无关的度量，
           确认每条公式各自贴着自己的目标形状。</li>
       </ul>
-      <p class="footnote">
+      <p class="footnote" data-i18n="shapes.sources.footnote">
         形状系统只是这个引擎的一半；另一半是<strong>动画</strong>（弹簧、clip 贝塞尔、状态机、眨眼）。
         见 <a href="index.html">总览页</a>。想自己加形状 → <a href="workshop.html">形状工作台</a>。<br>
         文中全部结论来自对 Grok Bot（Electron, macOS）app.asar 解包后的逆向分析；
@@ -361,23 +361,23 @@ for (const dir of DIRECTIONS) {
     </section>
 
     <footer class="footer">
-      <p>GrokBot 解剖 · 逆向工程笔记 · 本页所有图形均为程序化生成 ·
+      <p data-i18n="shapes.footer">GrokBot 解剖 · 逆向工程笔记 · 本页所有图形均为程序化生成 ·
         <a href="workshop.html">形状工作台 →</a></p>
     </footer>
 
   </main>
 
-  <nav class="toc" aria-label="本页导航">
-    <p class="toc__label">本页导航</p>
-    <a href="#s1">全景流水线</a>
-    <a href="#s2">图元实验室</a>
-    <a href="#s3">三种轮廓算法</a>
-    <a href="#s4">凸包约束</a>
-    <a href="#s5">环结构</a>
-    <a href="#s6">球链家族</a>
-    <a href="#s7">眼睛落座</a>
-    <a href="#s8">速查表</a>
-    <a href="#s9">数据来源</a>
+  <nav class="toc" aria-label="本页导航" data-i18n-attrs="aria-label:shapes.toc.ariaLabel">
+    <p class="toc__label" data-i18n="common.toc.label">本页导航</p>
+    <a href="#s1" data-i18n="shapes.toc.pipeline">全景流水线</a>
+    <a href="#s2" data-i18n="shapes.toc.primitives">图元实验室</a>
+    <a href="#s3" data-i18n="shapes.toc.silhouette">三种轮廓算法</a>
+    <a href="#s4" data-i18n="shapes.toc.hull">凸包约束</a>
+    <a href="#s5" data-i18n="shapes.toc.rings">环结构</a>
+    <a href="#s6" data-i18n="shapes.toc.balls">球链家族</a>
+    <a href="#s7" data-i18n="shapes.toc.seat">眼睛落座</a>
+    <a href="#s8" data-i18n="shapes.toc.ref">速查表</a>
+    <a href="#s9" data-i18n="shapes.toc.sources">数据来源</a>
   </nav>
 
 </div>

@@ -6,6 +6,7 @@
 // 描述符）全部来自 grok-recipes.json，与真引擎同源。
 import { rafLoop } from '../lib.js';
 import { lb, ir, ST, xT, kT } from '../vendor/grok-player.js';
+import { t } from '../i18n/i18n.js';
 
 const DEG = Math.PI / 180;
 const f = (n) => Math.round(n * 100) / 100;
@@ -52,17 +53,18 @@ export function init(root) {
   svg.addEventListener('pointerup', () => { dragging = false; });
 
   modeToggle.addEventListener('change', () => {
-    modeLabel.textContent = modeToggle.checked ? '球面投影（Grok Bot 方案）' : '平面贴眼（常见省事方案）';
+    modeLabel.textContent = modeToggle.checked ? t('index.js.sphere.modeSpherical') : t('index.js.sphere.modeFlat');
   });
+  modeLabel.textContent = modeToggle.checked ? t('index.js.sphere.modeSpherical') : t('index.js.sphere.modeFlat');
 
-  function draw(t) {
+  function draw(time) {
     if (!data) return;
     const spherical = modeToggle.checked;
     // 未被拖拽时缓慢自动摆动，拖拽后 2.5s 内淡出自动摆
-    const idle = Math.max(0, Math.min(1, (t - lastDrag - 2.5) / 1.5));
+    const idle = Math.max(0, Math.min(1, (time - lastDrag - 2.5) / 1.5));
     autoAmp += (idle - autoAmp) * 0.02;
-    const y = yaw + Math.sin(t * 0.4) * 16 * autoAmp;
-    const p = pitch + Math.sin(t * 0.27 + 1) * 6 * autoAmp;
+    const y = yaw + Math.sin(time * 0.4) * 16 * autoAmp;
+    const p = pitch + Math.sin(time * 0.27 + 1) * 6 * autoAmp;
     const { basis, mirror, base, neutral } = data;
     // 有效头部姿态 = 静止姿态 + 拖拽增量（与引擎的 euler 合成一致）
     const effYaw = base[1] + y, effPitch = base[0] + p;
@@ -99,10 +101,10 @@ export function init(root) {
       if (widths.length === 2 && (Math.abs(y) > 6 || Math.abs(p) > 6)) {
         const lo = Math.min(...widths), hi = Math.max(...widths);
         ratioEl.textContent = hi > 1e-6 ?
-          `远侧眼宽 / 近侧眼宽 = ${(lo / hi).toFixed(2)}（原版球面数学实时计算，非手调）` :
-          '一只眼睛已完全转到球背面';
+          `${t('index.js.sphere.ratioPre')}${(lo / hi).toFixed(2)}${t('index.js.sphere.ratioPost')}` :
+          t('index.js.sphere.eyeHidden');
       } else {
-        ratioEl.textContent = '转动头部，观察两只眼睛宽度比变化';
+        ratioEl.textContent = t('index.js.sphere.ratioHint');
       }
     } else {
       // 平面贴眼：线性平移、不压缩、不穿帮裁切（转过边缘仍然完整显示）
@@ -112,7 +114,7 @@ export function init(root) {
         const ey = CY - 18 + (p / 50) * R * 0.5;
         el.setAttribute('d', capsulePath(ex, ey, 0.13 * R, 0.285 * R));
       });
-      ratioEl.textContent = '平面模式：两只眼睛永远等宽，转过边缘也不消失 —— 穿帮';
+      ratioEl.textContent = t('index.js.sphere.flatNote');
     }
   }
 
