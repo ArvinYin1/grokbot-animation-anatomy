@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+  * { margin: 0; box-sizing: border-box; }
+  html, body { width: 1200px; height: 630px; overflow: hidden; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Helvetica Neue", "Segoe UI", sans-serif;
+    background: #ffffff; color: #0a0a0c;
+    display: flex; align-items: stretch;
+    padding: 64px 72px;
+  }
+  .left { flex: 1; display: flex; flex-direction: column; justify-content: space-between; min-width: 0; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand img { width: 34px; height: 34px; border-radius: 9px; border: 1px solid #e4e4e7; }
+  .brand span { font-size: 19px; font-weight: 600; letter-spacing: -0.01em; }
+  h1 { font-size: 56px; line-height: 1.18; font-weight: 700; letter-spacing: -0.03em; margin: 30px 0 20px; white-space: nowrap; }
+  .sub { font-size: 22px; line-height: 1.55; color: #52525b; max-width: 580px; }
+  .en { margin-top: 16px; font-size: 15px; color: #a1a1aa; letter-spacing: 0.01em; }
+  .foot {
+    font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 14px; color: #a1a1aa;
+  }
+  .right { display: flex; align-items: center; padding-left: 56px; }
+  .bot {
+    width: 380px; height: 380px; border-radius: 88px;
+    border: 1px solid #e4e4e7;
+    box-shadow: 0 24px 64px rgba(10,10,12,.08), 0 4px 16px rgba(10,10,12,.05);
+  }
+</style></head><body>
+  <div class="left">
+    <div>
+      <div class="brand">
+        <img src="../../design-system/brand.svg" alt="">
+        <span>GrokBot 解剖</span>
+      </div>
+      <h1>一个不用任何动画库的<br>角色动画引擎</h1>
+      <p class="sub">Grok Bot 头像引擎逆向解剖：程序化 SVG、形状 morph、弹簧、伪 3D 眼睛 —— 全部图形在运行时用代码算出来。</p>
+      <p class="en">A character animation engine with zero animation libraries</p>
+    </div>
+    <div class="foot">grokbot.yin.wiki</div>
+  </div>
+  <div class="right">
+    <img class="bot" src="../../design-system/brand.svg" alt="Grok Bot avatar">
+  </div>
+</body></html>
